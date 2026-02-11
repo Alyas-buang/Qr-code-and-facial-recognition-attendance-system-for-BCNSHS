@@ -1,7 +1,8 @@
 Title: Qr code and facial recognition system for BCNSHS
 
-MEMBERS: Mark ed Sedigo Kadusale/n
-         Venz horace D. Carabot/n
-         Sigasig Jera Salvania/n
-         Babor julie Ann Audeje/n
+MEMBERS: Mark ed Sedigo Kadusale <br>
+         Venz horace D. Carabot/<br>
+         Sigasig Jera Salvania<br>
+         Babor julie Ann Audeje<br>
          Dhale joshua G. Aliviado
+
