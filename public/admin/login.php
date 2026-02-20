@@ -13,8 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $next = $_POST['next'] ?? 'dashboard.php';
+    $token = $_POST['csrf_token'] ?? '';
 
-    if (admin_login($username, $password)) {
+    if (!csrf_validate($token)) {
+        $error = 'Invalid request token. Please refresh and try again.';
+    } elseif (admin_is_rate_limited()) {
+        $wait = admin_rate_limit_remaining_seconds();
+        $error = 'Too many login attempts. Try again in ' . $wait . ' seconds.';
+    } elseif (admin_login($username, $password)) {
         $target = 'dashboard.php';
         if (strpos($next, 'register_student.php') !== false) {
             $target = 'register_student.php';
@@ -27,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         header("Location: " . $target);
         exit();
+    } else {
+        $error = 'Invalid username or password.';
     }
-
-    $error = 'Invalid username or password.';
 }
 ?>
 <!DOCTYPE html>
@@ -45,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form class="card" method="post" action="">
         <h2>Admin Login</h2>
         <input type="hidden" name="next" value="<?php echo htmlspecialchars($next); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit">Login</button>

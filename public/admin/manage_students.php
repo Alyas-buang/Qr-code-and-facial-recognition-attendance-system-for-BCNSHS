@@ -18,10 +18,15 @@ if ($colRes && $colRes->num_rows > 0) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_validate($_POST['csrf_token'] ?? '')) {
+        $message = 'Invalid request token. Please refresh and try again.';
+        $messageType = 'error';
+    }
+
     $action = $_POST['action'] ?? '';
     $studentId = trim($_POST['student_id'] ?? '');
 
-    if ($action === 'update' && $studentId !== '') {
+    if ($message === '' && $action === 'update' && $studentId !== '') {
         $fullname = trim($_POST['fullname'] ?? '');
         $gradeSection = trim($_POST['grade_section'] ?? '');
         $parentEmail = trim($_POST['parent_email'] ?? '');
@@ -45,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($action === 'toggle_disable' && $studentId !== '' && $hasDisableColumn) {
+    if ($message === '' && $action === 'toggle_disable' && $studentId !== '' && $hasDisableColumn) {
         $nextState = ($_POST['next_state'] ?? '1') === '1' ? 1 : 0;
         $stmt = $conn->prepare("UPDATE students SET is_disabled = ? WHERE student_id = ?");
         $stmt->bind_param("is", $nextState, $studentId);
@@ -138,11 +143,13 @@ $students = $conn->query($studentSql);
                             <td>
                                 <div class="action-stack">
                                     <form id="update-<?php echo htmlspecialchars($row['student_id']); ?>" method="post">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
                                         <input type="hidden" name="action" value="update">
                                         <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
                                         <button type="submit" class="btn btn-save">Save</button>
                                     </form>
                                     <form method="post">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
                                         <input type="hidden" name="action" value="toggle_disable">
                                         <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
                                         <input type="hidden" name="next_state" value="<?php echo $isDisabled ? '0' : '1'; ?>">

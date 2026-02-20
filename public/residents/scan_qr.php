@@ -59,6 +59,7 @@ const infoDiv = document.getElementById("info");
 
 let student = null;
 let targetDescriptor = null;
+let attendanceToken = null;
 let isLocked = false;
 let stream = null;
 
@@ -126,13 +127,19 @@ async function handleStudent(code) {
     }
 
     infoDiv.style.display = "block";
-    infoDiv.innerHTML = `
-        <h3>${student.fullname}</h3>
-        <p>ID: ${student.student_id}</p>
-        <p>Section: ${student.grade_section}</p>
-    `;
+    infoDiv.textContent = "";
+    const nameEl = document.createElement("h3");
+    nameEl.textContent = student.fullname || "";
+    const idEl = document.createElement("p");
+    idEl.textContent = `ID: ${student.student_id || ""}`;
+    const sectionEl = document.createElement("p");
+    sectionEl.textContent = `Section: ${student.grade_section || ""}`;
+    infoDiv.appendChild(nameEl);
+    infoDiv.appendChild(idEl);
+    infoDiv.appendChild(sectionEl);
 
     targetDescriptor = new Float32Array(student.descriptor);
+    attendanceToken = student.attendance_token || null;
 
     startFaceCheck();
 }
@@ -214,7 +221,7 @@ async function saveAttendance() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 student_id: student.student_id,
-                parent_email: student.parent_email,
+                attendance_token: attendanceToken,
                 photo: photo
             })
         });

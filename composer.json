@@ -1,0 +1,8 @@
+{
+  "name": "bcnshs/attendance-system",
+  "description": "QR code and facial recognition attendance system",
+  "type": "project",
+  "require": {
+    "phpmailer/phpmailer": "^6.9"
+  }
+}

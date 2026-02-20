@@ -1,0 +1,13 @@
+.env
+
+# Generated media and runtime cache
+public/assets/uploads/
+src/assets/libs/phpqrcode/cache/
+
+# Logs / IDE
+*.log
+.vscode/
+.idea/
+
+# Optional composer vendor
+vendor/

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/auth.php";
 admin_require_login();
+$csrfToken = csrf_token();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,6 +44,7 @@ admin_require_login();
 const video = document.getElementById("video");
 const regBtn = document.getElementById("reg-btn");
 const MODEL_URL = '../../model/face-api'; 
+const csrfToken = <?php echo json_encode($csrfToken); ?>;
 
 function goBack() {
     if (window.history.length > 1) {
@@ -139,7 +141,8 @@ async function register() {
         fullname: name,
         grade: document.getElementById("grade").value,
         parent_email: email,
-        descriptor: Array.from(detection.descriptor)
+        descriptor: Array.from(detection.descriptor),
+        csrf_token: csrfToken
     };
 
     // 3. Send to PHP and Handle JSON Response
