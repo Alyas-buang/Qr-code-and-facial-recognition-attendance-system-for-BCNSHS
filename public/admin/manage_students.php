@@ -71,6 +71,25 @@ if ($hasDisableColumn) {
 }
 $studentSql .= " FROM students ORDER BY fullname ASC";
 $students = $conn->query($studentSql);
+
+$totalStudents = 0;
+$disabledStudents = 0;
+$activeStudents = 0;
+
+if ($hasDisableColumn) {
+    $statsRes = $conn->query("SELECT COUNT(*) AS total_students, SUM(CASE WHEN is_disabled = 1 THEN 1 ELSE 0 END) AS disabled_students FROM students");
+    if ($statsRes && ($statsRow = $statsRes->fetch_assoc())) {
+        $totalStudents = (int)$statsRow['total_students'];
+        $disabledStudents = (int)$statsRow['disabled_students'];
+        $activeStudents = $totalStudents - $disabledStudents;
+    }
+} else {
+    $statsRes = $conn->query("SELECT COUNT(*) AS total_students FROM students");
+    if ($statsRes && ($statsRow = $statsRes->fetch_assoc())) {
+        $totalStudents = (int)$statsRow['total_students'];
+        $activeStudents = $totalStudents;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -85,10 +104,28 @@ $students = $conn->query($studentSql);
 <button class="back-btn" onclick="goBack()">Back</button>
 
 <div class="page-wrap">
-    <div class="header-row">
-        <h2>Manage Students</h2>
-        
-    </div>
+    <section class="hero-row">
+        <div>
+            <p class="eyebrow">Directory</p>
+            <h1>Manage Student Accounts</h1>
+            <p class="hero-subtitle">Update profile details, monitor account status, and quickly filter the roster.</p>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <p class="stat-label">Total Students</p>
+            <p class="stat-value"><?php echo number_format($totalStudents); ?></p>
+        </article>
+        <article class="stat-card">
+            <p class="stat-label">Active</p>
+            <p class="stat-value"><?php echo number_format($activeStudents); ?></p>
+        </article>
+        <article class="stat-card">
+            <p class="stat-label">Disabled</p>
+            <p class="stat-value"><?php echo number_format($disabledStudents); ?></p>
+        </article>
+    </section>
 
     <?php if ($message !== ''): ?>
         <p class="message <?php echo $messageType === 'error' ? 'message-error' : 'message-success'; ?>">
@@ -96,80 +133,85 @@ $students = $conn->query($studentSql);
         </p>
     <?php endif; ?>
 
-    <div class="search-wrap">
-        <input type="text" id="student-search" class="search-input" placeholder="Search by name, ID, section, or email">
-    </div>
+    <section class="table-panel">
+        <div class="header-row">
+            <h2>Student Directory</h2>
+            <div class="search-wrap">
+                <input type="text" id="student-search" class="search-input" placeholder="Search by name, ID, section, or email">
+            </div>
+        </div>
 
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Student ID</th>
-                    <th>Full Name</th>
-                    <th>Grade & Section</th>
-                    <th>Parent Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="student-table-body">
-                <?php if ($students && $students->num_rows > 0): ?>
-                    <?php while ($row = $students->fetch_assoc()): ?>
-                        <?php
-                        $searchBlob = strtolower(
-                            $row['student_id'] . ' ' .
-                            $row['fullname'] . ' ' .
-                            $row['grade_section'] . ' ' .
-                            $row['parent_email']
-                        );
-                        $isDisabled = (int)$row['is_disabled'] === 1;
-                        ?>
-                        <tr data-search="<?php echo htmlspecialchars($searchBlob, ENT_QUOTES); ?>">
-                            <td><?php echo htmlspecialchars($row['student_id']); ?></td>
-                            <td>
-                                <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="fullname" value="<?php echo htmlspecialchars($row['fullname']); ?>" required>
-                            </td>
-                            <td>
-                                <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="grade_section" value="<?php echo htmlspecialchars($row['grade_section']); ?>" required>
-                            </td>
-                            <td>
-                                <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="parent_email" type="email" value="<?php echo htmlspecialchars($row['parent_email']); ?>" required>
-                            </td>
-                            <td>
-                                <span class="status-badge <?php echo $isDisabled ? 'status-disabled' : 'status-active'; ?>">
-                                    <?php echo $isDisabled ? 'Disabled' : 'Active'; ?>
-                                </span>
-                            </td>
-                            <td>
-                                <div class="action-stack">
-                                    <form id="update-<?php echo htmlspecialchars($row['student_id']); ?>" method="post">
-                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
-                                        <input type="hidden" name="action" value="update">
-                                        <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
-                                        <button type="submit" class="btn btn-save">Save</button>
-                                    </form>
-                                    <form method="post">
-                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
-                                        <input type="hidden" name="action" value="toggle_disable">
-                                        <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
-                                        <input type="hidden" name="next_state" value="<?php echo $isDisabled ? '0' : '1'; ?>">
-                                        <button type="submit" class="btn <?php echo $isDisabled ? 'btn-enable' : 'btn-disable'; ?>">
-                                            <?php echo $isDisabled ? 'Enable' : 'Disable'; ?>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
+        <div class="table-wrap">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="6" class="empty-row">No students found.</td>
+                        <th>Student ID</th>
+                        <th>Full Name</th>
+                        <th>Grade & Section</th>
+                        <th>Parent Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-    <p id="no-search-results" class="empty-row no-results">No matching students found.</p>
+                </thead>
+                <tbody id="student-table-body">
+                    <?php if ($students && $students->num_rows > 0): ?>
+                        <?php while ($row = $students->fetch_assoc()): ?>
+                            <?php
+                            $searchBlob = strtolower(
+                                $row['student_id'] . ' ' .
+                                $row['fullname'] . ' ' .
+                                $row['grade_section'] . ' ' .
+                                $row['parent_email']
+                            );
+                            $isDisabled = (int)$row['is_disabled'] === 1;
+                            ?>
+                            <tr data-search="<?php echo htmlspecialchars($searchBlob, ENT_QUOTES); ?>">
+                                <td><?php echo htmlspecialchars($row['student_id']); ?></td>
+                                <td>
+                                    <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="fullname" value="<?php echo htmlspecialchars($row['fullname']); ?>" required>
+                                </td>
+                                <td>
+                                    <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="grade_section" value="<?php echo htmlspecialchars($row['grade_section']); ?>" required>
+                                </td>
+                                <td>
+                                    <input form="update-<?php echo htmlspecialchars($row['student_id']); ?>" name="parent_email" type="email" value="<?php echo htmlspecialchars($row['parent_email']); ?>" required>
+                                </td>
+                                <td>
+                                    <span class="status-badge <?php echo $isDisabled ? 'status-disabled' : 'status-active'; ?>">
+                                        <?php echo $isDisabled ? 'Disabled' : 'Active'; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-stack">
+                                        <form id="update-<?php echo htmlspecialchars($row['student_id']); ?>" method="post">
+                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
+                                            <input type="hidden" name="action" value="update">
+                                            <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
+                                            <button type="submit" class="btn btn-save">Save</button>
+                                        </form>
+                                        <form method="post">
+                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES); ?>">
+                                            <input type="hidden" name="action" value="toggle_disable">
+                                            <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($row['student_id']); ?>">
+                                            <input type="hidden" name="next_state" value="<?php echo $isDisabled ? '0' : '1'; ?>">
+                                            <button type="submit" class="btn <?php echo $isDisabled ? 'btn-enable' : 'btn-disable'; ?>">
+                                                <?php echo $isDisabled ? 'Enable' : 'Disable'; ?>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="empty-row">No students found.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <p id="no-search-results" class="empty-row no-results">No matching students found.</p>
+    </section>
 </div>
 
 <script>

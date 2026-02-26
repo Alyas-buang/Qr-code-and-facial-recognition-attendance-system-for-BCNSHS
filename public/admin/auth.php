@@ -25,13 +25,17 @@ function admin_password_hash(): string
 
 function admin_client_ip(): string
 {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    return preg_replace('/[^a-zA-Z0-9\:\.\-]/', '_', $ip) ?: 'unknown';
+    return (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+}
+
+function admin_client_key(): string
+{
+    return hash('sha256', admin_client_ip());
 }
 
 function admin_attempt_file(): string
 {
-    return sys_get_temp_dir() . '/bcnshs_admin_login_' . admin_client_ip() . '.json';
+    return sys_get_temp_dir() . '/bcnshs_admin_login_' . admin_client_key() . '.json';
 }
 
 function admin_read_attempts(): array

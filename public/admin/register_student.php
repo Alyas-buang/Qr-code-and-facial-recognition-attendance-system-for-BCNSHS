@@ -8,68 +8,154 @@ $csrfToken = csrf_token();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registration & QR Generator</title>
+    <title>Register Student</title>
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
     
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <script src="../assets/js/face-api.js"></script>
     <link rel="stylesheet" href="../assets/css/register_student.css">
 </head>
 <body>
 <button class="back-btn" onclick="goBack()">Back</button>
 
+<main class="register-shell">
+    <section class="intro-panel">
+        <p class="eyebrow">Enrollment</p>
+        <h1>Register Student Profile</h1>
+        <p class="intro-text">Capture student details, verify a live facial descriptor, and automatically generate a QR code for attendance check-ins.</p>
+    </section>
 
-<div class="container" id="reg-form-container">
-    <h2>Student Registration</h2>
-    <p id="loading-overlay">Initializing AI Models...</p>
+    <section class="container" id="reg-form-container">
+        <h2>Student Information</h2>
+        <p id="loading-overlay">Initializing AI Models...</p>
 
-    <input id="student_id" type="text" placeholder="Student ID Number (e.g. 2024-001)">
-    <input id="fullname" type="text" placeholder="Full Name">
-    <input id="grade" type="text" placeholder="Grade & Section">
-    <input id="parent_email" type="email" placeholder="Parent Email Address">
+        <div class="field-grid">
+            <label for="student_id">Student ID</label>
+            <input id="student_id" type="text" placeholder="e.g. 2024-001">
 
-    <video id="video" autoplay muted></video>
-    
-    <button id="reg-btn" onclick="register()" disabled>Wait for Models...</button>
+            <label for="fullname">Full Name</label>
+            <input id="fullname" type="text" placeholder="Student full name">
 
-    <div id="qr-result">
-        <h3 class="success-title">Success!</h3>
-        <p>Registration complete. Use the QR below for attendance:</p>
-        <img id="qr-image" src="" alt="Student QR Code" width="180">
-        <p><small id="qr-val-text" class="qr-val-text"></small></p>
-        <button onclick="window.location.reload()" class="register-another-btn">Register Another</button>
-    </div>
-</div>
+            <label for="grade">Grade & Section</label>
+            <input id="grade" type="text" placeholder="e.g. Grade 11 - A">
+
+            <label for="parent_email">Parent Email Address</label>
+            <input id="parent_email" type="email" placeholder="parent@example.com">
+        </div>
+
+        <div class="camera-wrap">
+            <p class="camera-note">Keep the student's face centered with good lighting before submitting.</p>
+            <video id="video" autoplay muted></video>
+        </div>
+
+        <button id="reg-btn" onclick="register()" disabled>Wait for Models...</button>
+
+        <div id="qr-result">
+            <h3 class="success-title">Registration Complete</h3>
+            <p>Use this QR for attendance scanning:</p>
+            <img id="qr-image" src="" alt="Student QR Code" width="180">
+            <p><small id="qr-val-text" class="qr-val-text"></small></p>
+            <button onclick="window.location.reload()" class="register-another-btn">Register Another Student</button>
+        </div>
+    </section>
+</main>
 
 <script>
 const video = document.getElementById("video");
 const regBtn = document.getElementById("reg-btn");
 const MODEL_URL = '../../model/face-api'; 
 const csrfToken = <?php echo json_encode($csrfToken); ?>;
+const loadingOverlay = document.getElementById('loading-overlay');
+const MODEL_FILES = [
+    'tiny_face_detector_model-weights_manifest.json',
+    'tiny_face_detector_model-shard1',
+    'face_landmark_68_model-weights_manifest.json',
+    'face_landmark_68_model-shard1',
+    'face_recognition_model-weights_manifest.json',
+    'face_recognition_model-shard1',
+    'face_recognition_model-shard2'
+];
 
 function goBack() {
-    if (window.history.length > 1) {
+    const current = new URL(window.location.href);
+    const referrer = document.referrer ? new URL(document.referrer, window.location.origin) : null;
+    const canUseHistory =
+        window.history.length > 1 &&
+        referrer &&
+        referrer.origin === current.origin &&
+        referrer.pathname !== current.pathname;
+
+    if (canUseHistory) {
         window.history.back();
         return;
     }
-    window.location.href = "../../src/home.php";
+    window.location.replace("../../src/home.php");
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url, attempts = 3) {
+    let lastError = null;
+    for (let i = 1; i <= attempts; i++) {
+        try {
+            const res = await fetch(url, { cache: 'force-cache' });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            return true;
+        } catch (err) {
+            lastError = err;
+            await sleep(250 * i);
+        }
+    }
+    throw lastError || new Error('Failed to fetch model file');
+}
+
+async function warmModelAssets() {
+    await Promise.all(
+        MODEL_FILES.map(file => fetchWithRetry(`${MODEL_URL}/${file}`, 3))
+    );
+}
+
+async function loadModelsWithRetry(maxAttempts = 3) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            if (loadingOverlay) {
+                loadingOverlay.innerText = `Loading AI models (${attempt}/${maxAttempts})...`;
+            }
+            await warmModelAssets();
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            return;
+        } catch (err) {
+            lastError = err;
+            await sleep(500 * attempt);
+        }
+    }
+    throw lastError || new Error('Model loading failed');
 }
 
 // 1. Load Models & Start Camera
 async function init() {
     try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        
-        document.getElementById('loading-overlay').innerText = "AI Ready. Position your face.";
+        await loadModelsWithRetry(3);
+        if (loadingOverlay) {
+            loadingOverlay.innerText = "AI Ready. Position your face.";
+        }
         regBtn.disabled = false;
         regBtn.innerText = "Register & Generate QR";
         
         const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
         video.srcObject = stream;
     } catch (err) {
-        document.getElementById('loading-overlay').innerText = "Model Load Failed!";
+        if (loadingOverlay) {
+            loadingOverlay.innerText = "Model load failed. Check connection and refresh.";
+        }
         console.error(err);
     }
 }
@@ -82,15 +168,6 @@ function wait(ms) {
 
 async function captureFaceDescriptorWithRetry(maxAttempts = 10) {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const detectionSsd = await faceapi
-            .detectSingleFace(video)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-
-        if (detectionSsd) {
-            return detectionSsd;
-        }
-
         const detectionTiny = await faceapi
             .detectSingleFace(
                 video,
@@ -106,8 +183,10 @@ async function captureFaceDescriptorWithRetry(maxAttempts = 10) {
             return detectionTiny;
         }
 
-        document.getElementById('loading-overlay').innerText =
+        if (loadingOverlay) {
+            loadingOverlay.innerText =
             "Face not clear yet... hold still and face the camera";
+        }
         await wait(250);
     }
 
@@ -156,9 +235,11 @@ async function register() {
         const result = await response.json();
 
         if (result.success) {
-            // Hide the video and inputs
-            video.style.display = "none";
-            document.querySelectorAll('input').forEach(i => i.style.display = 'none');
+            // Hide live capture UI once profile is saved
+            const fieldGrid = document.querySelector('.field-grid');
+            const cameraWrap = document.querySelector('.camera-wrap');
+            if (fieldGrid) fieldGrid.style.display = "none";
+            if (cameraWrap) cameraWrap.style.display = "none";
             regBtn.style.display = "none";
             document.getElementById('loading-overlay').style.display = "none";
 

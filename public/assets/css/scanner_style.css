@@ -5,6 +5,12 @@
     --success: #28a745;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 .back-btn {
     position: fixed;
     top: 16px;
@@ -31,11 +37,12 @@ body, html {
     /* ADD THESE FOR CENTERING */
     margin: 0;
     padding: 0;
-    height: 100vh; /* Full viewport height */
-    width: 100vw;  /* Full viewport width */
+    min-height: 100dvh;
+    width: 100%;
     display: flex;
     justify-content: center; /* Horizontal centering */
     align-items: center;     /* Vertical centering */
+    overflow-x: hidden;
 }
 
 /* For the logo in the CSS if you use it as a background */
@@ -44,11 +51,14 @@ body, html {
 }
 .app-container {
     width: 100%;
-    max-width: 420px;
+    max-width: 960px;
     padding: 15px;
+    overflow-x: clip;
 }
 
 .scanner-card {
+    width: 100%;
+    max-width: 100%;
     background: #fff;
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -90,6 +100,20 @@ h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
     border: none !important;
     border-radius: 12px;
     overflow: hidden;
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+#reader * {
+    max-width: 100% !important;
+}
+
+#reader video,
+#reader img,
+#reader canvas {
+    width: 100% !important;
+    height: auto !important;
 }
 
 .video-container {
@@ -98,6 +122,7 @@ h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
     overflow: hidden;
     background: #000;
     margin: 15px 0;
+    width: 100%;
 }
 
 video {
@@ -150,7 +175,67 @@ video {
     margin-top: 10px;
 }
 
+.attendance-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 1;
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 2000;
+}
+
+.attendance-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.attendance-modal-card {
+    width: min(90vw, 360px);
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+#attendance-modal-title {
+    margin: 0;
+    color: #16a34a;
+    font-size: 1.2rem;
+}
+
+#attendance-modal-text {
+    margin: 8px 0 0;
+    color: #14532d;
+    font-size: 0.9rem;
+}
+
 .hidden { display: none; }
+
+@media (max-width: 900px) {
+    body,
+    html {
+        min-height: 100dvh;
+        display: block;
+    }
+
+    .app-container {
+        width: min(100%, 700px);
+        margin: 56px auto 18px;
+        padding: 12px;
+        overflow-x: clip;
+    }
+
+    .scanner-card {
+        width: 100%;
+    }
+}
 
 @media (max-width: 768px) {
     .back-btn {
@@ -162,14 +247,19 @@ video {
 
     body,
     html {
-        min-height: 100vh;
-        height: auto;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 10px 14px;
     }
 
     .app-container {
+        width: 100%;
         max-width: 100%;
         padding: 10px;
-        margin-top: 36px;
+        margin: 0 auto;
+        overflow-x: clip;
     }
 
     .scanner-card {

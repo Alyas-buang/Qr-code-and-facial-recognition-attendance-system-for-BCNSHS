@@ -49,6 +49,13 @@
     </div>
 </div>
 
+<div id="attendance-modal" class="attendance-modal" aria-live="polite" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:2000;">
+    <div class="attendance-modal-card" style="width:min(90vw,360px);background:#fff;border-radius:14px;padding:18px 16px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.25);">
+        <h3 id="attendance-modal-title" style="margin:0;color:#16a34a;font-size:1.2rem;">Attendance logged</h3>
+        <p id="attendance-modal-text" style="margin:8px 0 0;color:#14532d;font-size:.9rem;"></p>
+    </div>
+</div>
+
 
 <script>
 const video = document.getElementById("video");
@@ -56,40 +63,131 @@ const readerDiv = document.getElementById("reader");
 const verifyDiv = document.getElementById("verify");
 const statusMsg = document.getElementById("status");
 const infoDiv = document.getElementById("info");
+const attendanceModal = document.getElementById("attendance-modal");
+const attendanceModalText = document.getElementById("attendance-modal-text");
 
 let student = null;
 let targetDescriptor = null;
 let attendanceToken = null;
 let isLocked = false;
 let stream = null;
+let modalTimer = null;
+const MODEL_URL = '../../model/face-api';
+const MODEL_FILES = [
+    'tiny_face_detector_model-weights_manifest.json',
+    'tiny_face_detector_model-shard1',
+    'face_landmark_68_model-weights_manifest.json',
+    'face_landmark_68_model-shard1',
+    'face_recognition_model-weights_manifest.json',
+    'face_recognition_model-shard1',
+    'face_recognition_model-shard2'
+];
+
+function showAttendanceModal(studentName, guardianInformed) {
+    if (!attendanceModal || !attendanceModalText) return;
+
+    if (modalTimer) {
+        clearTimeout(modalTimer);
+    }
+
+    attendanceModalText.textContent = guardianInformed
+        ? `guardian/parent of "${studentName}" has been informed`
+        : "";
+    attendanceModal.style.display = "flex";
+    attendanceModal.setAttribute("aria-hidden", "false");
+
+    modalTimer = setTimeout(() => {
+        attendanceModal.style.display = "none";
+        attendanceModal.setAttribute("aria-hidden", "true");
+    }, 1500);
+}
 
 function goBack() {
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
     }
-    if (window.history.length > 1) {
+    const current = new URL(window.location.href);
+    const referrer = document.referrer ? new URL(document.referrer, window.location.origin) : null;
+    const canUseHistory =
+        window.history.length > 1 &&
+        referrer &&
+        referrer.origin === current.origin &&
+        referrer.pathname !== current.pathname;
+
+    if (canUseHistory) {
         window.history.back();
         return;
     }
-    window.location.href = "../../src/home.php";
+    window.location.replace("../../src/home.php");
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url, attempts = 3) {
+    let lastError = null;
+    for (let i = 1; i <= attempts; i++) {
+        try {
+            const res = await fetch(url, { cache: 'force-cache' });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            return true;
+        } catch (err) {
+            lastError = err;
+            await sleep(250 * i);
+        }
+    }
+    throw lastError || new Error('Failed to fetch model file');
+}
+
+async function warmModelAssets() {
+    await Promise.all(MODEL_FILES.map(file => fetchWithRetry(`${MODEL_URL}/${file}`, 3)));
 }
 
 /* ---------- LOAD FACE MODELS (ONCE) ---------- */
-async function loadModels() {
-    await faceapi.nets.tinyFaceDetector.loadFromUri('../../model/face-api');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('../../model/face-api');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('../../model/face-api');
-    console.log("Face models loaded");
+async function loadModels(maxAttempts = 3) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            statusMsg.innerText = `Loading face models (${attempt}/${maxAttempts})...`;
+            await warmModelAssets();
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            console.log("Face models loaded");
+            statusMsg.innerText = "Models loaded. Ready to scan QR.";
+            return true;
+        } catch (err) {
+            lastError = err;
+            await sleep(500 * attempt);
+        }
+    }
+
+    console.error('Model loading failed:', lastError);
+    statusMsg.style.color = "red";
+    statusMsg.innerText = "Model load failed. Check connection and refresh.";
+    return false;
 }
 
 window.onload = loadModels;
 
 /* ---------- INIT QR SCANNER ---------- */
 const qr = new Html5Qrcode("reader");
+const readerWrapper = document.getElementById("reader-wrapper");
+
+function computeQrBox() {
+    const wrapperWidth = readerWrapper ? readerWrapper.clientWidth : window.innerWidth;
+    const size = Math.round(Math.max(220, Math.min(420, wrapperWidth * 0.72)));
+    return { width: size, height: size };
+}
 
 qr.start(
     { facingMode: "environment" },
-    { fps: 15, qrbox: 220 },
+    { fps: 15, qrbox: computeQrBox() },
     async (code) => {
         // FULLY stop QR camera
         await qr.stop();
@@ -240,7 +338,9 @@ async function saveAttendance() {
 
         if (resData.success) {
             statusMsg.style.color = "green";
-            statusMsg.innerText = "Attendance recorded!";
+            statusMsg.innerText = "Attendance logged";
+            const guardianInformed = typeof resData.message === "string" && resData.message.toLowerCase().includes("email sent");
+            showAttendanceModal(student.fullname || "student", guardianInformed);
         } else {
             statusMsg.style.color = "red";
             statusMsg.innerText = "Failed to save attendance";
@@ -253,6 +353,6 @@ async function saveAttendance() {
 setTimeout(() => location.reload(), 2000);
 }
 </script>
-<?php include "../../src/includes/footer.php"; ?>
+
 </body>
 </html>

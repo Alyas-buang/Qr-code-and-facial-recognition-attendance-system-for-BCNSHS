@@ -1,149 +1,231 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+
+:root {
+    --bg: #eff4fb;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --muted: #5e6a80;
+    --line: #d7e1f3;
+    --brand: #0b5ed7;
+    --brand-2: #083c8b;
+    --success: #15803d;
+    --shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    text-align: center;
-    padding: 20px;
-    background: #f0f2f5;
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text);
+    background: radial-gradient(circle at 90% 0%, #d7e8ff 0%, transparent 40%), var(--bg);
+}
+
+h1,
+h2,
+h3 {
+    font-family: 'Sora', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.register-shell {
+    width: min(980px, 94%);
+    margin: 38px auto;
+    display: grid;
+    gap: 18px;
+}
+
+.intro-panel,
+.container {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+}
+
+.intro-panel {
+    padding: 24px 26px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.76rem;
+    color: var(--brand);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+}
+
+.intro-panel h1 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+}
+
+.intro-text {
+    margin: 10px 0 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.container {
+    padding: 24px 26px 28px;
+}
+
+.container h2 {
+    margin: 0 0 8px;
+    font-size: 1.22rem;
+}
+
+#loading-overlay {
+    margin: 0 0 15px;
+    color: var(--brand);
+    font-weight: 700;
+    background: #eaf2ff;
+    border: 1px solid #d6e4ff;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+
+.field-grid {
+    display: grid;
+    gap: 8px;
+}
+
+label {
+    font-size: 0.84rem;
+    color: #334155;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fcfdff;
+    font-size: 0.92rem;
+}
+
+input:focus {
+    outline: 2px solid #b7d3ff;
+    border-color: var(--brand);
+}
+
+.camera-wrap {
+    margin-top: 14px;
+    
+}
+
+.camera-note {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+video {
+    width: min(100%, 430px);
+    border-radius: 14px;
+    border: 1px solid #cedaf0;
+    background: #000;
+}
+
+button {
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    color: #fff;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    margin-top: 16px;
+    font-size: 0.93rem;
+    font-weight: 700;
+    width: 100%;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#qr-result {
+    margin-top: 20px;
+    display: none;
+    padding: 18px;
+    border: 1px dashed #7fd6a5;
+    border-radius: 12px;
+    background: #f4fff8;
+}
+
+.success-title {
+    margin: 0;
+    color: var(--success);
+    font-size: 1.06rem;
+}
+
+#qr-result p {
+    margin: 8px 0 0;
+}
+
+#qr-image {
+    margin: 14px 0 10px;
+    border: 1px solid #e5edf8;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+}
+
+.qr-val-text {
+    color: var(--muted);
+}
+
+.register-another-btn {
+    background: #1171c5;
 }
 
 .back-btn {
     position: fixed;
     top: 16px;
     left: 16px;
-    background: #1f2937;
+    background: rgba(15, 23, 42, 0.9);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
+    border-radius: 10px;
+    padding: 10px 14px;
     cursor: pointer;
     z-index: 1000;
-}
-
-.logout-link {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    background: #dc2626;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    z-index: 1000;
-}
-
-.container {
-    background: #fff;
-    padding: 30px;
-    border-radius: 15px;
-    display: inline-block;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    width: 90%;
-}
-
-h2 {
-    color: #333;
-    margin-bottom: 20px;
-}
-
-input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-sizing: border-box;
-}
-
-video {
-    border-radius: 10px;
-    background: #000;
-    margin-top: 15px;
-    width: 100%;
-    max-width: 320px;
-}
-
-button {
-    background: #28a745;
-    color: #fff;
-    border: none;
-    padding: 12px 25px;
-    cursor: pointer;
-    border-radius: 8px;
-    margin-top: 15px;
-    font-size: 16px;
-    transition: 0.3s;
-    width: 100%;
-}
-
-button:hover {
-    background: #218838;
-}
-
-#qr-result {
-    margin-top: 20px;
-    display: none;
-    padding: 20px;
-    border: 2px dashed #28a745;
-    border-radius: 10px;
-    background: #f9fff9;
-}
-
-#loading-overlay {
-    color: #0056b3;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-#qr-image {
-    margin: 15px 0;
-    border: 1px solid #eee;
-    padding: 10px;
-    background: #fff;
-}
-
-.success-title {
-    color: #28a745;
-}
-
-.qr-val-text {
-    color: #666;
-}
-
-.register-another-btn {
-    background: #007bff;
+    width: auto;
+    margin: 0;
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 12px;
-        padding-top: 64px;
+    .register-shell {
+        width: 95%;
+        margin-top: 62px;
+    }
+
+    .intro-panel,
+    .container {
+        border-radius: 14px;
+        padding: 16px;
+    }
+
+    video {
+        width: 100%;
     }
 
     .back-btn {
         top: 10px;
         left: 10px;
-        padding: 7px 12px;
-        font-size: 14px;
-    }
-
-    .container {
-        width: 100%;
-        max-width: 100%;
-        padding: 20px 14px;
-        border-radius: 12px;
-    }
-
-    h2 {
-        font-size: 1.25rem;
-    }
-
-    input,
-    button {
-        font-size: 15px;
-    }
-
-    #qr-image {
-        max-width: 100%;
-        height: auto;
+        padding: 8px 11px;
+        font-size: 0.82rem;
     }
 }

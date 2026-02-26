@@ -24,7 +24,7 @@ $publicPrefix = $isDirectHome ? '../public/' : 'public/';
 
         <div class="button-group">
             <button class="btn-primary" onclick="location.href='<?php echo $publicPrefix; ?>residents/scan_qr.php'">
-                Student Attendance (Scan QR)
+                Student Attendance(Scan QR)
             </button>
             
             <button class="btn-outline" onclick="location.href='<?php echo $publicPrefix; ?>admin/login.php'">
@@ -43,11 +43,19 @@ $publicPrefix = $isDirectHome ? '../public/' : 'public/';
 
 <script>
 function goBack() {
-    if (window.history.length > 1) {
+    const current = new URL(window.location.href);
+    const referrer = document.referrer ? new URL(document.referrer, window.location.origin) : null;
+    const canUseHistory =
+        window.history.length > 1 &&
+        referrer &&
+        referrer.origin === current.origin &&
+        referrer.pathname !== current.pathname;
+
+    if (canUseHistory) {
         window.history.back();
         return;
     }
-    window.location.href = "index.php";
+    window.location.replace("index.php");
 }
 </script>
 
