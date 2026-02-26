@@ -15,13 +15,32 @@ $csrfToken = csrf_token();
     <link rel="stylesheet" href="../assets/css/register_student.css">
 </head>
 <body>
-<button class="back-btn" onclick="goBack()">Back</button>
+<?php
+$headerLogoSrc = "../assets/css/logo.jpg";
+$headerHomeHref = "../../src/home.php";
+include "../../src/includes/header.php";
+?>
 
 <main class="register-shell">
     <section class="intro-panel">
-        <p class="eyebrow">Enrollment</p>
-        <h1>Register Student Profile</h1>
-        <p class="intro-text">Capture student details, verify a live facial descriptor, and automatically generate a QR code for attendance check-ins.</p>
+        <div>
+            <p class="eyebrow">Enrollment</p>
+            <h1>Register Student Profile</h1>
+            <p class="intro-text">Capture student details, verify a live facial descriptor, and automatically generate a QR code for attendance check-ins.</p>
+        </div>
+        <div class="menu-wrap">
+            <button type="button" id="register-menu-toggle" class="menu-toggle" aria-label="Open register menu" aria-expanded="false" aria-controls="register-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div id="register-menu" class="menu-drawer" hidden>
+                <a href="dashboard.php" class="action-link action-link-dashboard">Dashboard</a>
+                <a href="register_student.php" class="action-link action-link-register">Register Student</a>
+                <a href="manage_students.php" class="action-link action-link-manage">Manage Students</a>
+                <a href="logout.php" class="action-link action-link-logout">Logout</a>
+            </div>
+        </div>
     </section>
 
     <section class="container" id="reg-form-container">
@@ -75,20 +94,39 @@ const MODEL_FILES = [
     'face_recognition_model-shard2'
 ];
 
-function goBack() {
-    const current = new URL(window.location.href);
-    const referrer = document.referrer ? new URL(document.referrer, window.location.origin) : null;
-    const canUseHistory =
-        window.history.length > 1 &&
-        referrer &&
-        referrer.origin === current.origin &&
-        referrer.pathname !== current.pathname;
+const menuToggle = document.getElementById("register-menu-toggle");
+const menuDrawer = document.getElementById("register-menu");
 
-    if (canUseHistory) {
-        window.history.back();
-        return;
-    }
-    window.location.replace("../../src/home.php");
+if (menuToggle && menuDrawer) {
+    const closeMenu = function () {
+        menuDrawer.hidden = true;
+        menuDrawer.classList.remove("open");
+        menuToggle.setAttribute("aria-expanded", "false");
+    };
+
+    menuToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = menuDrawer.hidden;
+        menuDrawer.hidden = !willOpen;
+        menuDrawer.classList.toggle("open", willOpen);
+        menuToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    document.addEventListener("click", function (event) {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (!target.closest(".menu-wrap")) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeMenu();
+        }
+    });
 }
 
 function sleep(ms) {

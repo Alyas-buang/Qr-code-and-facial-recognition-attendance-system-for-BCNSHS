@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="../assets/css/scanner_style.css">
 </head>
 <body>
+<?php
+$headerLogoSrc = "../assets/css/logo.jpg";
+$headerHomeHref = "../../src/home.php";
+include "../../src/includes/header.php";
+?>
 <button class="back-btn" onclick="goBack()">Back</button>
 
 <div class="app-container">

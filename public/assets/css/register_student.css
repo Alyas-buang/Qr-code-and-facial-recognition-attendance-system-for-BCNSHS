@@ -47,6 +47,10 @@ h3 {
 
 .intro-panel {
     padding: 24px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
 }
 
 .eyebrow {
@@ -67,6 +71,83 @@ h3 {
     margin: 10px 0 0;
     color: var(--muted);
     line-height: 1.55;
+}
+
+.menu-wrap {
+    position: relative;
+    margin-left: auto;
+}
+
+.menu-toggle {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: #0f172a;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.menu-toggle span {
+    width: 20px;
+    height: 2px;
+    background: #ffffff;
+    border-radius: 999px;
+}
+
+.menu-drawer {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 30;
+}
+
+.menu-drawer[hidden] {
+    display: none;
+}
+
+.action-link {
+    text-decoration: none;
+    color: #fff;
+    padding: 11px 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(2, 6, 23, 0.2);
+}
+
+.action-link-dashboard {
+    background: #0f172a;
+}
+
+.action-link-register {
+    background: var(--success);
+}
+
+.action-link-manage {
+    background: var(--brand);
+}
+
+.action-link-logout {
+    background: #dc2626;
 }
 
 .container {
@@ -116,13 +197,16 @@ input:focus {
 
 .camera-wrap {
     margin-top: 14px;
-    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .camera-note {
     margin: 0 0 10px;
     color: var(--muted);
     font-size: 0.88rem;
+    text-align: center;
 }
 
 video {
@@ -191,21 +275,6 @@ button:disabled {
     background: #1171c5;
 }
 
-.back-btn {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    background: rgba(15, 23, 42, 0.9);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 14px;
-    cursor: pointer;
-    z-index: 1000;
-    width: auto;
-    margin: 0;
-}
-
 @media (max-width: 768px) {
     .register-shell {
         width: 95%;
@@ -218,14 +287,16 @@ button:disabled {
         padding: 16px;
     }
 
+    .intro-panel {
+        flex-direction: column;
+    }
+
+    .menu-wrap {
+        margin-left: auto;
+    }
+
     video {
         width: 100%;
     }
 
-    .back-btn {
-        top: 10px;
-        left: 10px;
-        padding: 8px 11px;
-        font-size: 0.82rem;
-    }
 }

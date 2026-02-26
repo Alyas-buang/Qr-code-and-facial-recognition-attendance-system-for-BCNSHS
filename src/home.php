@@ -14,8 +14,6 @@ $publicPrefix = $isDirectHome ? '../public/' : 'public/';
     <link rel="stylesheet" href="<?php echo $assetsPrefix; ?>assets/css/index.css">
 </head>
 <body>
-    
-
     <div class="glass-container">
         <img src="<?php echo $assetsPrefix; ?>assets/css/logo.jpg" alt="BCNSHS Logo" class="logo">
         

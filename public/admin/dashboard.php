@@ -39,6 +39,11 @@ if ($latestRes && ($latestRow = $latestRes->fetch_assoc())) {
     <link rel="stylesheet" href="../assets/css/dashboard_styles.css">
 </head>
 <body>
+<?php
+$headerLogoSrc = "../assets/css/logo.jpg";
+$headerHomeHref = "../../src/home.php";
+include "../../src/includes/header.php";
+?>
 <button class="back-btn" onclick="goBack()">Back</button>
 <main class="dashboard-wrap">
     <section class="hero-panel">

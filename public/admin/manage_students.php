@@ -101,7 +101,11 @@ if ($hasDisableColumn) {
     <link rel="stylesheet" href="../assets/css/manage_students.css">
 </head>
 <body>
-<button class="back-btn" onclick="goBack()">Back</button>
+<?php
+$headerLogoSrc = "../assets/css/logo.jpg";
+$headerHomeHref = "../../src/home.php";
+include "../../src/includes/header.php";
+?>
 
 <div class="page-wrap">
     <section class="hero-row">
@@ -109,6 +113,19 @@ if ($hasDisableColumn) {
             <p class="eyebrow">Directory</p>
             <h1>Manage Student Accounts</h1>
             <p class="hero-subtitle">Update profile details, monitor account status, and quickly filter the roster.</p>
+        </div>
+        <div class="menu-wrap">
+            <button type="button" id="manage-menu-toggle" class="menu-toggle" aria-label="Open manage menu" aria-expanded="false" aria-controls="manage-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div id="manage-menu" class="menu-drawer" hidden>
+                <a href="dashboard.php" class="action-link action-link-dashboard">Dashboard</a>
+                <a href="register_student.php" class="action-link action-link-register">Register Student</a>
+                <a href="manage_students.php" class="action-link action-link-manage">Manage Students</a>
+                <a href="logout.php" class="action-link action-link-logout">Logout</a>
+            </div>
         </div>
     </section>
 
@@ -215,14 +232,43 @@ if ($hasDisableColumn) {
 </div>
 
 <script>
-function goBack() {
-   
-    window.location.href = "dashboard.php";
-}
-
 const searchInput = document.getElementById("student-search");
 const rows = Array.from(document.querySelectorAll("#student-table-body tr[data-search]"));
 const noResults = document.getElementById("no-search-results");
+const menuToggle = document.getElementById("manage-menu-toggle");
+const menuDrawer = document.getElementById("manage-menu");
+
+if (menuToggle && menuDrawer) {
+    const closeMenu = function () {
+        menuDrawer.hidden = true;
+        menuDrawer.classList.remove("open");
+        menuToggle.setAttribute("aria-expanded", "false");
+    };
+
+    menuToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const willOpen = menuDrawer.hidden;
+        menuDrawer.hidden = !willOpen;
+        menuDrawer.classList.toggle("open", willOpen);
+        menuToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    document.addEventListener("click", function (event) {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        if (!target.closest(".menu-wrap")) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeMenu();
+        }
+    });
+}
 
 if (searchInput) {
     searchInput.addEventListener("input", function () {
