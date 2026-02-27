@@ -12,7 +12,7 @@ $csrfToken = csrf_token();
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
     
     <script src="../assets/js/face-api.js"></script>
-    <link rel="stylesheet" href="../assets/css/register_student.css">
+    <link rel="stylesheet" href="../assets/css/register_student.css?v=3">
 </head>
 <body>
 <?php

@@ -7,14 +7,9 @@
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
     <script src="../assets/js/face-api.js"></script>
     <script src="../assets/js/html5-qrcode.min.js"></script>
-    <link rel="stylesheet" href="../assets/css/scanner_style.css">
+    <link rel="stylesheet" href="../assets/css/scanner_style.css?v=3">
 </head>
 <body>
-<?php
-$headerLogoSrc = "../assets/css/logo.jpg";
-$headerHomeHref = "../../src/home.php";
-include "../../src/includes/header.php";
-?>
 <button class="back-btn" onclick="goBack()">Back</button>
 
 <div class="app-container">
@@ -34,6 +29,7 @@ include "../../src/includes/header.php";
         <div id="reader-wrapper">
             <div id="reader"></div>
             <p class="hint">Center your student QR code in the box</p>
+            <p id="qr-status" class="hint" style="margin-top:8px;"></p>
         </div>
 
         <div id="verify" class="hidden">
@@ -70,6 +66,7 @@ const statusMsg = document.getElementById("status");
 const infoDiv = document.getElementById("info");
 const attendanceModal = document.getElementById("attendance-modal");
 const attendanceModalText = document.getElementById("attendance-modal-text");
+const stepIndicator = document.getElementById("step-indicator");
 
 let student = null;
 let targetDescriptor = null;
@@ -77,12 +74,15 @@ let attendanceToken = null;
 let isLocked = false;
 let stream = null;
 let modalTimer = null;
+let isQrRunning = false;
+let faceModelsReady = false;
+let modelsLoadPromise = null;
 const MODEL_URL = '../../model/face-api';
 const MODEL_FILES = [
     'tiny_face_detector_model-weights_manifest.json',
     'tiny_face_detector_model-shard1',
-    'face_landmark_68_model-weights_manifest.json',
-    'face_landmark_68_model-shard1',
+    'face_landmark_68_tiny_model-weights_manifest.json',
+    'face_landmark_68_tiny_model-shard1',
     'face_recognition_model-weights_manifest.json',
     'face_recognition_model-shard1',
     'face_recognition_model-shard2'
@@ -130,6 +130,21 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function toErrorMessage(err) {
+    if (err && typeof err === "object") {
+        if (typeof err.message === "string" && err.message.trim() !== "") {
+            return err.message;
+        }
+        if (typeof err.name === "string" && err.name.trim() !== "") {
+            return err.name;
+        }
+    }
+    if (typeof err === "string" && err.trim() !== "") {
+        return err;
+    }
+    return "Unknown error";
+}
+
 async function fetchWithRetry(url, attempts = 3) {
     let lastError = null;
     for (let i = 1; i <= attempts; i++) {
@@ -160,29 +175,34 @@ async function loadModels(maxAttempts = 3) {
             await warmModelAssets();
             await Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
             ]);
             console.log("Face models loaded");
             statusMsg.innerText = "Models loaded. Ready to scan QR.";
             return true;
         } catch (err) {
-            lastError = err;
+            lastError = err ?? new Error("Model load attempt failed");
             await sleep(500 * attempt);
         }
     }
 
-    console.error('Model loading failed:', lastError);
+    console.error('Model loading failed:', toErrorMessage(lastError), lastError);
     statusMsg.style.color = "red";
     statusMsg.innerText = "Model load failed. Check connection and refresh.";
     return false;
 }
 
-window.onload = loadModels;
-
 /* ---------- INIT QR SCANNER ---------- */
 const qr = new Html5Qrcode("reader");
 const readerWrapper = document.getElementById("reader-wrapper");
+const qrStatus = document.getElementById("qr-status");
+
+function setQrStatus(text, isError = false) {
+    if (!qrStatus) return;
+    qrStatus.innerText = text;
+    qrStatus.style.color = isError ? "#b91c1c" : "";
+}
 
 function computeQrBox() {
     const wrapperWidth = readerWrapper ? readerWrapper.clientWidth : window.innerWidth;
@@ -190,22 +210,94 @@ function computeQrBox() {
     return { width: size, height: size };
 }
 
-qr.start(
-    { facingMode: "environment" },
-    { fps: 15, qrbox: computeQrBox() },
-    async (code) => {
-        // FULLY stop QR camera
+async function stopQrScannerIfRunning() {
+    if (!isQrRunning) return;
+    try {
         await qr.stop();
-        await qr.clear();
-
-        // SMALL HARDWARE RELEASE DELAY (CRITICAL)
-        await new Promise(r => setTimeout(r, 500));
-
-        readerDiv.style.display = "none";
-        verifyDiv.style.display = "block";
-        handleStudent(code);
+    } catch (err) {
+        console.warn("QR stop warning:", toErrorMessage(err));
     }
-);
+    try {
+        await qr.clear();
+    } catch (err) {
+        console.warn("QR clear warning:", toErrorMessage(err));
+    }
+    isQrRunning = false;
+}
+
+async function startQrScanner() {
+    if (stepIndicator) {
+        stepIndicator.innerText = "Step 1: Scan QR Code";
+    }
+    statusMsg.style.color = "";
+    statusMsg.innerText = "Loading face verification models...";
+    setQrStatus("Requesting camera access...");
+
+    try {
+        await qr.start(
+            { facingMode: "environment" },
+            { fps: 15, qrbox: computeQrBox() },
+            async (code) => {
+                await stopQrScannerIfRunning();
+                await sleep(120);
+
+                readerDiv.style.display = "none";
+                verifyDiv.style.display = "block";
+                if (stepIndicator) {
+                    stepIndicator.innerText = "Step 2: Face Verification";
+                }
+                if (modelsLoadPromise && !faceModelsReady) {
+                    statusMsg.style.color = "";
+                    statusMsg.innerText = "Finalizing face models...";
+                    await modelsLoadPromise;
+                }
+                if (!faceModelsReady) {
+                    statusMsg.style.color = "red";
+                    statusMsg.innerText = "Face models failed to load. Tap Reset Scanner and try again.";
+                    return;
+                }
+                handleStudent(code);
+            }
+        );
+        isQrRunning = true;
+        setQrStatus("QR scanner ready.");
+    } catch (err) {
+        const message = toErrorMessage(err);
+        console.error("QR scanner start failed:", message, err);
+        if (message.includes("NotAllowedError")) {
+            setQrStatus("Camera permission denied/dismissed. Allow camera then tap Reset Scanner.", true);
+            return;
+        }
+        setQrStatus(`Unable to start QR camera (${message}). Tap Reset Scanner and try again.`, true);
+    }
+}
+
+async function initScanner() {
+    await startQrScanner();
+
+    modelsLoadPromise = loadModels(3)
+        .then((ok) => {
+            faceModelsReady = !!ok;
+            if (!ok) {
+                setQrStatus("QR ready, but face models failed to load. Tap Reset Scanner after checking connection.", true);
+            }
+            return ok;
+        })
+        .catch((err) => {
+            faceModelsReady = false;
+            console.error("Face model load fatal:", toErrorMessage(err), err);
+            setQrStatus("QR ready, but face models failed to load. Tap Reset Scanner.", true);
+            return false;
+        });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initScanner().catch((err) => {
+        console.error("Scanner init failed:", toErrorMessage(err), err);
+        statusMsg.style.color = "red";
+        statusMsg.innerText = "Scanner initialization failed. Refresh and try again.";
+    });
+});
 
 /* ---------- FETCH STUDENT ---------- */
 async function handleStudent(code) {
@@ -255,8 +347,9 @@ async function startFaceCheck() {
         stream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: "user",
-                width: 640,
-                height: 480
+                width: { ideal: 480 },
+                height: { ideal: 360 },
+                frameRate: { ideal: 24, max: 30 }
             }
         });
     } catch (err) {
@@ -268,34 +361,64 @@ async function startFaceCheck() {
     video.srcObject = stream;
 
     video.onplay = () => {
-        const timer = setInterval(async () => {
+        const detectorOptions = new faceapi.TinyFaceDetectorOptions({
+            inputSize: 160,
+            scoreThreshold: 0.45
+        });
+        const minDetectionGapMs = 220;
+        let lastDetectionAt = 0;
+        let isDetecting = false;
+        let consecutiveMatches = 0;
+
+        const detectLoop = async () => {
             if (isLocked) return;
 
-            const result = await faceapi
-                .detectSingleFace(
-                    video,
-                    new faceapi.TinyFaceDetectorOptions({
-                        inputSize: 224,
-                        scoreThreshold: 0.5
-                    })
-                )
-                .withFaceLandmarks()
-                .withFaceDescriptor();
-
-            if (!result) return;
-
-            const distance = faceapi.euclideanDistance(
-                result.descriptor,
-                targetDescriptor
-            );
-
-            if (distance < 0.48) {
-                isLocked = true;
-                clearInterval(timer);
-                statusMsg.innerText = "Face matched. Saving...";
-                saveAttendance();
+            const now = performance.now();
+            if (isDetecting || now - lastDetectionAt < minDetectionGapMs) {
+                requestAnimationFrame(detectLoop);
+                return;
             }
-        }, 700);
+
+            isDetecting = true;
+            lastDetectionAt = now;
+
+            try {
+                const result = await faceapi
+                    .detectSingleFace(video, detectorOptions)
+                    .withFaceLandmarks(true)
+                    .withFaceDescriptor();
+
+                if (!result) {
+                    consecutiveMatches = 0;
+                } else {
+                    const distance = faceapi.euclideanDistance(
+                        result.descriptor,
+                        targetDescriptor
+                    );
+
+                    if (distance < 0.48) {
+                        consecutiveMatches += 1;
+                        if (consecutiveMatches >= 2) {
+                            isLocked = true;
+                            statusMsg.innerText = "Face matched. Saving...";
+                            saveAttendance();
+                            return;
+                        }
+                    } else {
+                        consecutiveMatches = 0;
+                    }
+                }
+            } catch (err) {
+                console.error("Face detection error:", err);
+                consecutiveMatches = 0;
+            } finally {
+                isDetecting = false;
+            }
+
+            requestAnimationFrame(detectLoop);
+        };
+
+        requestAnimationFrame(detectLoop);
     };
 }
 

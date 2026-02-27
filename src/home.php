@@ -11,7 +11,7 @@ $publicPrefix = $isDirectHome ? '../public/' : 'public/';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BCNSHS Attendance System</title>
     <link rel="icon" type="image/jpeg" href="<?php echo $assetsPrefix; ?>assets/css/logo.jpg">
-    <link rel="stylesheet" href="<?php echo $assetsPrefix; ?>assets/css/index.css">
+    <link rel="stylesheet" href="<?php echo $assetsPrefix; ?>assets/css/index.css?v=3">
 </head>
 <body>
     <div class="glass-container">

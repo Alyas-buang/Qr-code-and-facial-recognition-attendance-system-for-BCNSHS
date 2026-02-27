@@ -6,9 +6,9 @@ $headerSubtitle = $headerSubtitle ?? 'Attendance Management System';
 ?>
 <style>
 .site-header {
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    background: linear-gradient(110deg, #0f172a 0%, #1d4ed8 52%, #0ea5e9 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
     position: sticky;
     top: 0;
     z-index: 1200;
@@ -28,7 +28,7 @@ $headerSubtitle = $headerSubtitle ?? 'Attendance Management System';
     align-items: center;
     gap: 14px;
     text-decoration: none;
-    color: #0f172a;
+    color: #f8fbff;
 }
 
 .site-header__logo {
@@ -36,7 +36,7 @@ $headerSubtitle = $headerSubtitle ?? 'Attendance Management System';
     height: 58px;
     border-radius: 999px;
     object-fit: cover;
-    border: 1px solid #d1d5db;
+    border: 2px solid rgba(255, 255, 255, 0.55);
 }
 
 .site-header__text {
@@ -52,7 +52,7 @@ $headerSubtitle = $headerSubtitle ?? 'Attendance Management System';
 
 .site-header__subtitle {
     font-size: 0.9rem;
-    color: #475569;
+    color: rgba(239, 246, 255, 0.95);
     font-weight: 600;
 }
 

@@ -1,9 +1,9 @@
 /* Color Variables for easy updates */
 :root {
-    --primary-blue: #00249c;
-    --accent-red: #e31e24;
+    --primary-blue: #1d4ed8;
+    --accent-red: #f97316;
     --text-dark: #333333;
-    --glass-white: rgba(255, 255, 255, 0.9);
+    --glass-white: rgba(255, 255, 255, 0.88);
 }
 
 * {
@@ -18,8 +18,11 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-                url('background.jpg');
+    background:
+        radial-gradient(circle at 12% 12%, rgba(16, 185, 129, 0.35), transparent 34%),
+        radial-gradient(circle at 86% 82%, rgba(249, 115, 22, 0.38), transparent 30%),
+        linear-gradient(rgba(15, 23, 42, 0.48), rgba(15, 23, 42, 0.58)),
+        url('background.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -27,7 +30,7 @@ html {
 }
 
 .glass-container {
-    background: var(--glass-white);
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.93), rgba(239, 246, 255, 0.86));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     padding: 40px;
@@ -77,25 +80,25 @@ button {
 }
 
 .btn-primary {
-    background-color: var(--primary-blue);
+    background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
     color: #fff;
     box-shadow: 0 4px 12px rgba(0, 36, 156, 0.25);
 }
 
 .btn-primary:hover {
-    background-color: #001b75;
+    background: linear-gradient(135deg, #1e40af, #0284c7);
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(0, 36, 156, 0.35);
 }
 
 .btn-outline {
-    background-color: transparent;
-    color: var(--primary-blue);
-    border: 2px solid var(--primary-blue);
+    background-color: rgba(255, 255, 255, 0.55);
+    color: #1e3a8a;
+    border: 2px solid #3b82f6;
 }
 
 .btn-outline:hover {
-    background-color: var(--primary-blue);
+    background-color: #3b82f6;
     color: #fff;
 }
 

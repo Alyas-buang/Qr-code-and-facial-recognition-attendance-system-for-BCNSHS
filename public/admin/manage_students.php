@@ -98,7 +98,7 @@ if ($hasDisableColumn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Students</title>
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
-    <link rel="stylesheet" href="../assets/css/manage_students.css">
+    <link rel="stylesheet" href="../assets/css/manage_students.css?v=3">
 </head>
 <body>
 <?php

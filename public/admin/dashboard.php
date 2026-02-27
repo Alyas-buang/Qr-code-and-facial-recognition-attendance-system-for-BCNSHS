@@ -7,6 +7,12 @@ $totalLogs = 0;
 $todayLogs = 0;
 $studentsCount = 0;
 $latestScanText = "No scans yet";
+$hasDisableColumn = false;
+
+$disableColRes = $conn->query("SHOW COLUMNS FROM students LIKE 'is_disabled'");
+if ($disableColRes && $disableColRes->num_rows > 0) {
+    $hasDisableColumn = true;
+}
 
 $countRes = $conn->query("SELECT COUNT(*) AS total_logs FROM attendance");
 if ($countRes && ($countRow = $countRes->fetch_assoc())) {
@@ -36,7 +42,7 @@ if ($latestRes && ($latestRow = $latestRes->fetch_assoc())) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
-    <link rel="stylesheet" href="../assets/css/dashboard_styles.css">
+    <link rel="stylesheet" href="../assets/css/dashboard_styles.css?v=3">
 </head>
 <body>
 <?php
@@ -109,15 +115,19 @@ include "../../src/includes/header.php";
                         <th>Name</th>
                         <th>Grade & Section</th>
                         <th>Date & Time</th>
-                        <th>Method</th>
+                        <th>Status</th>
                         <th>Parent Email</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php
-                // Updated SQL: Matches your 'Aliviado_db' schema perfectly
-                $sql = "SELECT a.student_id, a.date, a.time, a.photo_path, a.method, 
-                               s.fullname, s.grade_section, s.parent_email
+                $statusSql = $hasDisableColumn
+                    ? "CASE WHEN s.is_disabled = 1 THEN 'Disabled' ELSE 'Active' END AS student_status"
+                    : "'Active' AS student_status";
+
+                $sql = "SELECT a.student_id, a.date, a.time, a.photo_path,
+                               s.fullname, s.grade_section, s.parent_email,
+                               {$statusSql}
                         FROM attendance a
                         INNER JOIN students s ON a.student_id = s.student_id
                         ORDER BY a.date DESC, a.time DESC";
@@ -135,13 +145,16 @@ include "../../src/includes/header.php";
                         $nameEsc = htmlspecialchars((string)$row['fullname'], ENT_QUOTES);
                         $gradeSectionEsc = htmlspecialchars((string)$row['grade_section'], ENT_QUOTES);
                         $dateTimeEsc = htmlspecialchars($displayDate . " at " . $displayTime, ENT_QUOTES);
-                        $methodEsc = htmlspecialchars((string)$row['method'], ENT_QUOTES);
+                        $statusText = (string)($row['student_status'] ?? 'Active');
+                        $statusEsc = htmlspecialchars($statusText, ENT_QUOTES);
+                        $statusClass = strtolower($statusText) === 'disabled' ? 'status-pill status-disabled' : 'status-pill status-active';
                         $parentEmailEsc = htmlspecialchars((string)$row['parent_email'], ENT_QUOTES);
                         $searchBlob = strtolower(
                             $row['student_id'] . ' ' .
                             $row['fullname'] . ' ' .
                             $row['grade_section'] . ' ' .
                             $row['parent_email'] . ' ' .
+                            $statusText . ' ' .
                             $displayDate . ' ' .
                             $displayTime
                         );
@@ -149,10 +162,10 @@ include "../../src/includes/header.php";
                         echo "<tr class='data-row' data-search='" . htmlspecialchars($searchBlob, ENT_QUOTES) . "'>";
                         echo "<td><img src='{$photoSrcEsc}' alt='Student Photo' class='table-photo'></td>";
                         echo "<td>{$studentIdEsc}</td>";
-                        echo "<td><button type='button' class='student-name-btn' data-photo-src='{$photoSrcEsc}' data-student-id='{$studentIdEsc}' data-name='{$nameEsc}' data-grade-section='{$gradeSectionEsc}' data-date-time='{$dateTimeEsc}' data-method='{$methodEsc}' data-parent-email='{$parentEmailEsc}'>{$nameEsc}</button></td>";
+                        echo "<td><button type='button' class='student-name-btn' data-photo-src='{$photoSrcEsc}' data-student-id='{$studentIdEsc}' data-name='{$nameEsc}' data-grade-section='{$gradeSectionEsc}' data-date-time='{$dateTimeEsc}' data-status='{$statusEsc}' data-parent-email='{$parentEmailEsc}'>{$nameEsc}</button></td>";
                         echo "<td>{$gradeSectionEsc}</td>";
                         echo "<td>" . $displayDate . " at " . $displayTime . "</td>";
-                        echo "<td><span class='method-tag'>{$methodEsc}</span></td>";
+                        echo "<td><span class='{$statusClass}'>{$statusEsc}</span></td>";
                         echo "<td>{$parentEmailEsc}</td>";
                         echo "</tr>";
                     }
@@ -316,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = nameButton.getAttribute('data-name') || '';
         const gradeSection = nameButton.getAttribute('data-grade-section') || '';
         const dateTime = nameButton.getAttribute('data-date-time') || '';
-        const method = nameButton.getAttribute('data-method') || '';
+        const status = nameButton.getAttribute('data-status') || '';
         const parentEmail = nameButton.getAttribute('data-parent-email') || '';
 
         modalBody.innerHTML = `
@@ -326,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <li><strong>Student ID:</strong> ${studentId}</li>
                 <li><strong>Grade & Section:</strong> ${gradeSection}</li>
                 <li><strong>Date & Time:</strong> ${dateTime}</li>
-                <li><strong>Method:</strong> ${method}</li>
+                <li><strong>Status:</strong> ${status}</li>
                 <li><strong>Parent Email:</strong> ${parentEmail}</li>
             </ul>
         `;

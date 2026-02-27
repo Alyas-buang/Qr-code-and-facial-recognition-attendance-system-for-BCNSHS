@@ -1,17 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
 
 :root {
-    --bg: #f2f5fb;
+    --bg: #eef6ff;
     --surface: #ffffff;
     --surface-soft: #f8faff;
     --text: #0f172a;
     --muted: #5b6478;
     --line: #dbe4f2;
-    --brand: #0b5ed7;
-    --brand-dark: #0a49a6;
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
     --success: #16a34a;
     --danger: #dc2626;
     --shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+    --hero-grad: linear-gradient(120deg, #1d4ed8 0%, #0ea5e9 55%, #22c55e 100%);
 }
 
 * {
@@ -22,7 +23,11 @@ body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     margin: 0;
     color: var(--text);
-    background: radial-gradient(circle at top right, #d9e8ff 0%, transparent 36%), var(--bg);
+    background:
+        radial-gradient(circle at 14% 18%, #fde68a 0%, transparent 32%),
+        radial-gradient(circle at 85% 12%, #bfdbfe 0%, transparent 34%),
+        radial-gradient(circle at 82% 78%, #bbf7d0 0%, transparent 30%),
+        var(--bg);
     overflow-x: hidden;
 }
 
@@ -41,7 +46,7 @@ h2 {
 
 .hero-panel,
 .panel {
-    background: var(--surface);
+    background: linear-gradient(150deg, #ffffff, #f4f9ff);
     border: 1px solid var(--line);
     border-radius: 18px;
     box-shadow: var(--shadow);
@@ -53,11 +58,13 @@ h2 {
     justify-content: space-between;
     gap: 16px;
     align-items: flex-start;
+    border-top: 0;
+    background: var(--hero-grad);
 }
 
 .eyebrow {
     margin: 0 0 8px;
-    color: var(--brand);
+    color: rgba(255, 255, 255, 0.88);
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
@@ -67,11 +74,12 @@ h2 {
 .hero-panel h1 {
     margin: 0;
     font-size: clamp(1.3rem, 2.4vw, 2rem);
+    color: #ffffff;
 }
 
 .hero-subtitle {
     margin: 10px 0 0;
-    color: var(--muted);
+    color: rgba(239, 246, 255, 0.96);
     max-width: 650px;
     line-height: 1.55;
 }
@@ -93,7 +101,7 @@ h2 {
     height: 44px;
     border: none;
     border-radius: 10px;
-    background: #0f172a;
+    background: rgba(15, 23, 42, 0.92);
     display: inline-flex;
     flex-direction: column;
     justify-content: center;
@@ -163,10 +171,26 @@ h2 {
 }
 
 .stat-card {
-    background: linear-gradient(145deg, #f5f9ff, #ffffff);
+    background: linear-gradient(145deg, #f0f7ff, #ffffff 55%, #fdf2f8);
     border: 1px solid var(--line);
     border-radius: 16px;
     padding: 16px 18px;
+}
+
+.stat-card:nth-child(1) {
+    background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+}
+
+.stat-card:nth-child(2) {
+    background: linear-gradient(135deg, #dcfce7, #ecfccb);
+}
+
+.stat-card:nth-child(3) {
+    background: linear-gradient(135deg, #ede9fe, #dbeafe);
+}
+
+.stat-card:nth-child(4) {
+    background: linear-gradient(135deg, #ffedd5, #fef3c7);
 }
 
 .stat-label {
@@ -467,8 +491,8 @@ td {
 }
 
 th {
-    background: #edf4ff;
-    color: #11316f;
+    background: linear-gradient(90deg, #dbeafe, #e0f2fe);
+    color: #0f2f6b;
     font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -505,6 +529,24 @@ img:hover {
     font-weight: 600;
     background: #e0f2fe;
     color: #0c4a6e;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-disabled {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .section-title {

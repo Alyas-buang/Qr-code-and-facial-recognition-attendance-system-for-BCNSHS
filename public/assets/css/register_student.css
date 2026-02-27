@@ -1,15 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
 
 :root {
-    --bg: #eff4fb;
+    --bg: #edf7ff;
     --surface: #ffffff;
     --text: #0f172a;
     --muted: #5e6a80;
     --line: #d7e1f3;
-    --brand: #0b5ed7;
-    --brand-2: #083c8b;
+    --brand: #2563eb;
+    --brand-2: #0f4bcf;
     --success: #15803d;
     --shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+    --hero-grad: linear-gradient(120deg, #f97316 0%, #f43f5e 45%, #8b5cf6 100%);
 }
 
 * {
@@ -20,7 +21,11 @@ body {
     margin: 0;
     font-family: 'Plus Jakarta Sans', sans-serif;
     color: var(--text);
-    background: radial-gradient(circle at 90% 0%, #d7e8ff 0%, transparent 40%), var(--bg);
+    background:
+        radial-gradient(circle at 8% 14%, #fef3c7 0%, transparent 30%),
+        radial-gradient(circle at 90% 0%, #d7e8ff 0%, transparent 40%),
+        radial-gradient(circle at 82% 84%, #bae6fd 0%, transparent 30%),
+        var(--bg);
 }
 
 h1,
@@ -39,7 +44,7 @@ h3 {
 
 .intro-panel,
 .container {
-    background: var(--surface);
+    background: linear-gradient(150deg, #ffffff, #f4f9ff);
     border: 1px solid var(--line);
     border-radius: 18px;
     box-shadow: var(--shadow);
@@ -51,12 +56,14 @@ h3 {
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
+    border-top: 0;
+    background: var(--hero-grad);
 }
 
 .eyebrow {
     margin: 0 0 8px;
     font-size: 0.76rem;
-    color: var(--brand);
+    color: rgba(255, 255, 255, 0.88);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -65,11 +72,12 @@ h3 {
 .intro-panel h1 {
     margin: 0;
     font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+    color: #ffffff;
 }
 
 .intro-text {
     margin: 10px 0 0;
-    color: var(--muted);
+    color: rgba(255, 241, 242, 0.96);
     line-height: 1.55;
 }
 
@@ -83,7 +91,7 @@ h3 {
     height: 44px;
     border: none;
     border-radius: 10px;
-    background: #0f172a;
+    background: rgba(15, 23, 42, 0.92);
     display: inline-flex;
     flex-direction: column;
     justify-content: center;
@@ -152,6 +160,7 @@ h3 {
 
 .container {
     padding: 24px 26px 28px;
+    background: linear-gradient(155deg, #ffffff, #eff6ff 60%, #eef2ff);
 }
 
 .container h2 {
@@ -163,8 +172,8 @@ h3 {
     margin: 0 0 15px;
     color: var(--brand);
     font-weight: 700;
-    background: #eaf2ff;
-    border: 1px solid #d6e4ff;
+    background: linear-gradient(90deg, #dbeafe, #cffafe);
+    border: 1px solid #bfdbfe;
     padding: 10px 12px;
     border-radius: 10px;
 }
