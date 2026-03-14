@@ -1,3 +1,6 @@
-<?php
-include "src\home.php"; 
-?>
+<!DOCTYPE html>
+<html>
+<body>
+    <?php include "src/home.php"; ?>
+</body>
+</html>
