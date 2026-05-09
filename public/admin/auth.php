@@ -19,8 +19,27 @@ function admin_username(): string
 
 function admin_password_hash(): string
 {
-    $fallback = '$2y$10$Sc4liMXAeHKYo3Q.COBozOHQdzMS9bc.7frbEeYo.AmSZk7m3nn0.';
-    return app_env('ADMIN_PASSWORD_HASH', $fallback) ?? $fallback;
+    $hash = app_env('ADMIN_PASSWORD_HASH');
+    if ($hash === null || $hash === '') {
+        throw new RuntimeException('Missing required ADMIN_PASSWORD_HASH value.');
+    }
+
+    $info = password_get_info($hash);
+    if (($info['algo'] ?? null) === null || (int) ($info['algo'] ?? 0) === 0) {
+        throw new RuntimeException('ADMIN_PASSWORD_HASH is not a valid password hash.');
+    }
+
+    return $hash;
+}
+
+function admin_auth_config_error(): ?string
+{
+    try {
+        admin_password_hash();
+        return null;
+    } catch (RuntimeException $e) {
+        return $e->getMessage();
+    }
 }
 
 function admin_client_ip(): string
@@ -116,6 +135,13 @@ function admin_is_logged_in(): bool
 
 function admin_login(string $username, string $password): bool
 {
+    try {
+        $passwordHash = admin_password_hash();
+    } catch (RuntimeException $e) {
+        error_log('Admin login configuration error: ' . $e->getMessage());
+        return false;
+    }
+
     if (admin_is_rate_limited()) {
         return false;
     }
@@ -125,7 +151,7 @@ function admin_login(string $username, string $password): bool
         return false;
     }
 
-    if (!password_verify($password, admin_password_hash())) {
+    if (!password_verify($password, $passwordHash)) {
         admin_record_failed_attempt();
         return false;
     }

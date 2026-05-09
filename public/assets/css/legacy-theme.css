@@ -1,0 +1,294 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap");
+
+:root {
+    --legacy-bg: #eef6ff;
+    --legacy-line: #dbe4f2;
+    --legacy-muted: #5b6478;
+    --legacy-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+    --legacy-btn-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+    --legacy-btn-shadow-hover: 0 10px 22px rgba(15, 23, 42, 0.24);
+}
+
+body {
+    font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, sans-serif;
+    background:
+        linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.6)),
+        radial-gradient(circle at 14% 18%, #fde68a 0%, transparent 32%),
+        radial-gradient(circle at 85% 12%, #bfdbfe 0%, transparent 34%),
+        radial-gradient(circle at 82% 78%, #bbf7d0 0%, transparent 30%),
+        url("background.jpg"),
+        var(--legacy-bg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+    font-family: "Sora", "Plus Jakarta Sans", sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.navbar {
+    background: linear-gradient(110deg, #0f172a 0%, #1d4ed8 52%, #0ea5e9 100%) !important;
+}
+
+.navbar .text-primary-content {
+    color: #f8fbff !important;
+}
+
+.card {
+    border-color: var(--legacy-line) !important;
+    box-shadow: var(--legacy-shadow);
+}
+
+.hoverable-media {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .hoverable-media:hover {
+        transform: translateY(-2px) scale(1.06);
+        box-shadow: 0 16px 26px rgba(15, 23, 42, 0.24);
+        filter: saturate(1.05);
+        z-index: 2;
+    }
+}
+
+.dashboard-hero,
+.manage-hero,
+.register-hero {
+    background: linear-gradient(120deg, #1d4ed8 0%, #0ea5e9 55%, #22c55e 100%) !important;
+    color: #fff;
+    position: relative;
+    overflow: visible !important;
+    z-index: 20;
+}
+
+.manage-hero {
+    background: linear-gradient(120deg, #7c3aed 0%, #2563eb 55%, #06b6d4 100%) !important;
+}
+
+.register-hero {
+    background: linear-gradient(120deg, #f97316 0%, #f43f5e 45%, #8b5cf6 100%) !important;
+}
+
+.dashboard-hero p,
+.manage-hero p,
+.register-hero p,
+.dashboard-hero h1,
+.manage-hero h1,
+.register-hero h1 {
+    color: #fff !important;
+}
+
+.dashboard-hero .menu-toggle,
+.manage-hero .menu-toggle,
+.register-hero .menu-toggle {
+    background: rgba(15, 23, 42, 0.92) !important;
+    color: #fff;
+}
+
+.btn {
+    border-width: 2px;
+    border-color: rgba(15, 23, 42, 0.24);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: var(--legacy-btn-shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn.btn-outline {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(30, 64, 175, 0.45);
+}
+
+.btn:focus-visible {
+    outline: 3px solid rgba(14, 116, 255, 0.45);
+    outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.86;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: var(--legacy-btn-shadow-hover);
+        filter: saturate(1.1);
+    }
+}
+
+.stat-label {
+    margin: 0;
+    color: var(--legacy-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.stats-grid .card:nth-child(1) {
+    background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+}
+
+.stats-grid .card:nth-child(2) {
+    background: linear-gradient(135deg, #dcfce7, #ecfccb);
+}
+
+.stats-grid .card:nth-child(3) {
+    background: linear-gradient(135deg, #ede9fe, #dbeafe);
+}
+
+.stats-grid .card:nth-child(4) {
+    background: linear-gradient(135deg, #ffedd5, #fef3c7);
+}
+
+.menu-drawer {
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    z-index: 80 !important;
+}
+
+.menu-drawer[hidden] {
+    display: none !important;
+}
+
+.menu-wrap {
+    position: relative;
+    z-index: 70;
+}
+
+.table thead th {
+    background: linear-gradient(90deg, #e0e7ff, #dbeafe);
+    color: #24407a;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.table tbody td {
+    vertical-align: middle;
+}
+
+.table-wrap {
+    -webkit-overflow-scrolling: touch;
+}
+
+.action-stack .btn {
+    width: 100%;
+}
+
+.home-page .home-card {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(239, 246, 255, 0.9));
+}
+
+.home-page .home-logo {
+    border: 2px solid #bfdbfe;
+}
+
+.admin-login-page .login-card {
+    background: linear-gradient(150deg, #ffffff, #f4f9ff);
+}
+
+.register-page #loading-overlay {
+    border: 1px solid #bfdbfe;
+}
+
+.register-page #qr-result {
+    background: #f4fff8;
+}
+
+.scanner-page #reader {
+    min-height: 260px;
+}
+
+.scanner-page #video {
+    max-width: 480px;
+    max-height: 360px;
+    object-fit: contain;
+}
+
+.scanner-page #info {
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    body {
+        background-attachment: scroll;
+    }
+
+    .table {
+        font-size: 0.78rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.55rem 0.6rem;
+    }
+
+    .menu-drawer {
+        width: 12.5rem !important;
+    }
+
+    .home-page .home-card,
+    .admin-login-page .login-card,
+    .dashboard-hero,
+    .manage-hero,
+    .register-hero {
+        border-radius: 0.85rem;
+    }
+
+    .admin-dashboard-page .table-wrap {
+        overflow-x: visible;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .admin-dashboard-page .table {
+        min-width: 0 !important;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 0.6rem;
+    }
+
+    .admin-dashboard-page .table thead {
+        display: none;
+    }
+
+    .admin-dashboard-page .table tr.data-row {
+        display: block;
+        border: 1px solid var(--legacy-line);
+        border-radius: 0.75rem;
+        background: #fff;
+        padding: 0;
+    }
+
+    .admin-dashboard-page .table tr.data-row td {
+        display: none;
+        border: 0;
+    }
+
+    .admin-dashboard-page .table tr.data-row td:nth-child(3),
+    .admin-dashboard-page .table tr.data-row td:nth-child(5),
+    .admin-dashboard-page .table tr.data-row td:nth-child(6) {
+        display: block;
+        padding: 0.9rem 1rem;
+    }
+
+    .admin-dashboard-page .table tr.data-row td:nth-child(5),
+    .admin-dashboard-page .table tr.data-row td:nth-child(6) {
+        padding-top: 0;
+    }
+
+    .admin-dashboard-page .student-name-btn {
+        display: block;
+        width: 100%;
+        font-weight: 700;
+        text-align: left;
+        color: #0a49a6;
+        text-decoration: none;
+    }
+}

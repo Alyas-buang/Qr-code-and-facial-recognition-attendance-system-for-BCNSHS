@@ -55,3 +55,17 @@ function app_env(string $key, ?string $default = null): ?string
     }
     return $value;
 }
+
+/**
+ * Fetch a required environment variable and fail fast if missing.
+ *
+ * @throws RuntimeException
+ */
+function app_env_required(string $key): string
+{
+    $value = app_env($key);
+    if ($value === null || $value === '') {
+        throw new RuntimeException("Missing required environment variable: {$key}");
+    }
+    return $value;
+}

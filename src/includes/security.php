@@ -44,3 +44,10 @@ function app_json_response(array $payload, int $status = 200): void
     echo json_encode($payload);
     exit();
 }
+
+function app_no_cache_headers(): void
+{
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}

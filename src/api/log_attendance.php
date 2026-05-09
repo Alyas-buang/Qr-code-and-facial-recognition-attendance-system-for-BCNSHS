@@ -5,10 +5,10 @@ declare(strict_types=1);
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
-date_default_timezone_set('Asia/Manila');
-header('Content-Type: application/json');
-
 require_once __DIR__ . '/../../src/includes/env.php';
+require_once __DIR__ . '/../../src/includes/security.php';
+require_once __DIR__ . '/../../src/includes/attendance_token.php';
+require_once __DIR__ . '/../../src/includes/attendance_status.php';
 if (is_file(__DIR__ . '/../../vendor/autoload.php')) {
     require_once __DIR__ . '/../../vendor/autoload.php';
 } else {
@@ -19,32 +19,19 @@ if (is_file(__DIR__ . '/../../vendor/autoload.php')) {
 include __DIR__ . '/../../database/db.php';
 
 app_env_load(__DIR__ . '/../../.env');
+app_no_cache_headers();
+header('Content-Type: application/json');
+date_default_timezone_set(attendance_app_timezone()->getName());
 
 const ATTENDANCE_TOKEN_TTL_SECONDS = 180;
 const MAX_IMAGE_BYTES = 3_145_728; // 3MB
 
-function attendance_sign(string $studentId, int $timestamp): string
-{
-    $secret = app_env('APP_SECRET', 'local-dev-secret-change-me') ?? 'local-dev-secret-change-me';
-    return hash_hmac('sha256', $studentId . '|' . $timestamp, $secret);
-}
-
-function attendance_token_valid(string $studentId, array $token): bool
-{
-    if (!isset($token['iat'], $token['sig'])) {
-        return false;
-    }
-
-    $iat = (int) $token['iat'];
-    $sig = (string) $token['sig'];
-    $now = time();
-
-    if ($iat <= 0 || ($now - $iat) > ATTENDANCE_TOKEN_TTL_SECONDS || $iat > ($now + 30)) {
-        return false;
-    }
-
-    $expected = attendance_sign($studentId, $iat);
-    return hash_equals($expected, $sig);
+try {
+    app_env_required('APP_SECRET');
+} catch (RuntimeException $e) {
+    error_log('Configuration error in log_attendance.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Server configuration error.']);
+    exit();
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -62,7 +49,7 @@ if ($sid === '' || $photoData === '' || !is_array($token)) {
     exit();
 }
 
-if (!attendance_token_valid($sid, $token)) {
+if (!attendance_token_valid($sid, $token, ATTENDANCE_TOKEN_TTL_SECONDS)) {
     echo json_encode(['success' => false, 'message' => 'Invalid or expired verification token.']);
     exit();
 }
@@ -71,7 +58,14 @@ $currentDate = date('m-d-Y');
 $currentTime = date('h:i A');
 $dbDate = date('Y-m-d');
 $dbTime = date('H:i:s');
+$attendanceStatus = attendance_status_from_time($dbTime);
 $method = 'Face Recognition';
+$hasAttendanceStatusColumn = false;
+
+$statusColRes = $conn->query("SHOW COLUMNS FROM attendance LIKE 'status'");
+if ($statusColRes && $statusColRes->num_rows > 0) {
+    $hasAttendanceStatusColumn = true;
+}
 
 $lockName = 'attendance_' . $sid;
 $hasLock = false;
@@ -103,13 +97,12 @@ try {
          FROM attendance
          WHERE student_id = ?
            AND date = ?
-           AND time > SUBTIME(NOW(), '00:00:30')
          LIMIT 1"
     );
     $check->bind_param('ss', $sid, $dbDate);
     $check->execute();
     if ($check->get_result()->num_rows > 0) {
-        echo json_encode(['success' => false, 'message' => 'Duplicate prevented.']);
+        echo json_encode(['success' => false, 'message' => 'Attendance already logged for today.']);
         exit();
     }
 
@@ -151,11 +144,19 @@ try {
     }
     @chmod($filepath, 0644);
 
-    $stmt = $conn->prepare(
-        'INSERT INTO attendance (student_id, date, time, photo_path, method)
-         VALUES (?, ?, ?, ?, ?)'
-    );
-    $stmt->bind_param('sssss', $sid, $dbDate, $dbTime, $filename, $method);
+    if ($hasAttendanceStatusColumn) {
+        $stmt = $conn->prepare(
+            'INSERT INTO attendance (student_id, date, time, photo_path, method, status)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->bind_param('ssssss', $sid, $dbDate, $dbTime, $filename, $method, $attendanceStatus);
+    } else {
+        $stmt = $conn->prepare(
+            'INSERT INTO attendance (student_id, date, time, photo_path, method)
+             VALUES (?, ?, ?, ?, ?)'
+        );
+        $stmt->bind_param('sssss', $sid, $dbDate, $dbTime, $filename, $method);
+    }
     if (!$stmt->execute()) {
         error_log('Attendance insert failed: ' . $stmt->error);
         echo json_encode(['success' => false, 'message' => 'Failed to record attendance.']);
@@ -190,19 +191,28 @@ try {
                 <h3>Attendance Notification</h3>
                 <p>Good day,</p>
                 <p>Your child <b>{$fullname}</b> has arrived at <b>Campus</b>.</p>
+                <p><b>Attendance Status:</b> {$attendanceStatus}</p>
                 <p><b>Date:</b> {$currentDate}<br>
                 <b>Time:</b> {$currentTime}</p>
                 <p><i>Real-time verification photo is attached to this email.
                 This email is auto-generated. Do not reply.</i></p>";
             $mail->send();
-            echo json_encode(['success' => true, 'message' => 'Attendance logged and email sent.']);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Attendance logged and email sent.',
+                'attendance_status' => $attendanceStatus,
+            ]);
             exit();
         } catch (Exception $e) {
             error_log('Mailer failed: ' . $e->getMessage());
         }
     }
 
-    echo json_encode(['success' => true, 'message' => 'Attendance logged.']);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Attendance logged.',
+        'attendance_status' => $attendanceStatus,
+    ]);
 } finally {
     if ($hasLock) {
         $releaseStmt = $conn->prepare('SELECT RELEASE_LOCK(?)');

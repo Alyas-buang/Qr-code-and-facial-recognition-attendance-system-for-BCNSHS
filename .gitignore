@@ -11,3 +11,8 @@ src/assets/libs/phpqrcode/cache/
 
 # Optional composer vendor
 vendor/
+node_modules/
+.phpunit.cache/
+
+# Local installers
+xampp-windows-*-installer.exe

@@ -1,0 +1,15 @@
+{
+  "name": "bcnshs-attendance-ui",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DaisyUI/Tailwind assets for BCNSHS attendance system",
+  "scripts": {
+    "dev": "tailwindcss -i ./src/assets/css/app.css -o ./public/assets/css/app.css --watch",
+    "build": "tailwindcss -i ./src/assets/css/app.css -o ./public/assets/css/app.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.12",
+    "daisyui": "^5.3.10",
+    "tailwindcss": "^4.1.12"
+  }
+}

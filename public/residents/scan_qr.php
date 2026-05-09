@@ -5,55 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Scanner | BCNSHS</title>
     <link rel="icon" type="image/jpeg" href="../assets/css/logo.jpg">
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/legacy-theme.css">
+    <link rel="stylesheet" href="../assets/css/animations.css">
     <script src="../assets/js/face-api.js"></script>
+    <script src="../assets/js/face-model-loader.js"></script>
     <script src="../assets/js/html5-qrcode.min.js"></script>
-    <link rel="stylesheet" href="../assets/css/scanner_style.css?v=3">
+    <script src="../assets/js/anime.min.js"></script>
+    <script src="../assets/js/anime-utils.js"></script>
+    <script src="../assets/js/form-utils.js"></script>
 </head>
-<body>
-<button class="back-btn" onclick="goBack()">Back</button>
-
-<div class="app-container">
-    <div class="scanner-card">
-        <div class="header">
-            <img src="../assets/css/logo.jpg" alt="Logo" class="logo-small">
+<body class="scanner-page min-h-screen bg-base-200 p-4">
+<div class="app-container container mx-auto mt-6 max-w-2xl">
+    <div class="mb-3 flex items-center">
+        <button class="btn btn-sm btn-neutral border border-base-300 shadow-md" onclick="goBack()">Back</button>
+    </div>
+    <div class="card border border-base-300 bg-base-100 shadow-xl">
+        <div class="card-body p-4 sm:p-6">
+        <div class="mb-3 flex items-center gap-3">
+            <img src="../assets/css/logo.jpg" alt="Logo" class="logo-small hoverable-media h-12 w-12 rounded-full object-cover">
             <div>
-                <h2>BCNSHS Scanner</h2>
-                <div id="step-indicator" class="step-text">Step 1: Scan QR Code</div>
+                <h2 class="text-xl font-bold">BCNSHS Scanner</h2>
+                <div id="step-indicator" class="step-text text-sm text-base-content opacity-70">Step 1: Scan QR Code</div>
             </div>
         </div>
 
-        <div class="progress-container">
-            <div id="progress-bar" class="progress-fill"></div>
+        <div class="mb-4 w-full rounded-box bg-base-300">
+            <div id="progress-bar" class="h-2 w-0 rounded-box bg-primary"></div>
         </div>
 
-        <div id="reader-wrapper">
-            <div id="reader"></div>
-            <p class="hint">Center your student QR code in the box</p>
-            <p id="qr-status" class="hint" style="margin-top:8px;"></p>
+        <div id="reader-wrapper" class="space-y-2">
+            <div id="reader" class="mx-auto overflow-hidden rounded-box border border-base-300"></div>
+            <p class="hint mt-2 text-sm text-base-content opacity-70">Center your student QR code in the box</p>
+            <p id="qr-status" class="hint mt-2 text-sm text-base-content opacity-70"></p>
         </div>
 
         <div id="verify" class="hidden">
-            <div id="info" class="student-card"></div>
+            <div id="info" class="alert mt-3"></div>
             
-            <div class="video-container">
-                <video id="video" autoplay muted playsinline></video>
+            <div>
+                <video id="video" class="mx-auto mt-3 w-full rounded-box bg-black" autoplay muted playsinline></video>
                 <div class="face-overlay"></div>
             </div>
             
-            <div class="status-box">
-                <div id="status-spinner" class="spinner"></div>
-                <p id="status">Initializing Face Recognition...</p>
+            <div class="mt-3 flex items-center gap-2">
+                <span id="status-spinner" class="loading loading-spinner loading-sm hidden"></span>
+                <p id="status" class="text-sm">Initializing Face Recognition...</p>
             </div>
         </div>
         
-        <button class="btn-cancel" onclick="location.reload()">Reset Scanner</button>
+        <button class="btn-cancel btn btn-error mt-4" onclick="location.reload()">Reset Scanner</button>
+        </div>
     </div>
 </div>
 
-<div id="attendance-modal" class="attendance-modal" aria-live="polite" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:2000;">
-    <div class="attendance-modal-card" style="width:min(90vw,360px);background:#fff;border-radius:14px;padding:18px 16px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.25);">
-        <h3 id="attendance-modal-title" style="margin:0;color:#16a34a;font-size:1.2rem;">Attendance logged</h3>
-        <p id="attendance-modal-text" style="margin:8px 0 0;color:#14532d;font-size:.9rem;"></p>
+<div id="attendance-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-30 p-4" aria-live="polite" aria-hidden="true">
+    <div class="card w-full max-w-sm bg-base-100 shadow-2xl">
+        <div class="card-body text-center">
+        <h3 id="attendance-modal-title" class="text-xl font-bold text-success">Attendance logged</h3>
+        <p id="attendance-modal-text" class="text-sm opacity-80"></p>
+        </div>
     </div>
 </div>
 
@@ -67,6 +78,8 @@ const infoDiv = document.getElementById("info");
 const attendanceModal = document.getElementById("attendance-modal");
 const attendanceModalText = document.getElementById("attendance-modal-text");
 const stepIndicator = document.getElementById("step-indicator");
+const progressBar = document.getElementById("progress-bar");
+const statusSpinner = document.getElementById("status-spinner");
 
 let student = null;
 let targetDescriptor = null;
@@ -88,6 +101,20 @@ const MODEL_FILES = [
     'face_recognition_model-shard2'
 ];
 
+function setProgress(percent, isError = false) {
+    if (!progressBar) return;
+    const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+    progressBar.style.width = `${clamped}%`;
+    progressBar.style.background = isError
+        ? "linear-gradient(90deg, #ef4444, #f97316)"
+        : "linear-gradient(90deg, #2563eb, #0ea5e9, #22c55e)";
+}
+
+function setLoadingState(isLoading) {
+    if (!statusSpinner) return;
+    statusSpinner.classList.toggle("hidden", !isLoading);
+}
+
 function showAttendanceModal(studentName, guardianInformed) {
     if (!attendanceModal || !attendanceModalText) return;
 
@@ -98,11 +125,13 @@ function showAttendanceModal(studentName, guardianInformed) {
     attendanceModalText.textContent = guardianInformed
         ? `guardian/parent of "${studentName}" has been informed`
         : "";
-    attendanceModal.style.display = "flex";
+    attendanceModal.classList.remove("hidden");
+    attendanceModal.classList.add("flex");
     attendanceModal.setAttribute("aria-hidden", "false");
 
     modalTimer = setTimeout(() => {
-        attendanceModal.style.display = "none";
+        attendanceModal.classList.remove("flex");
+        attendanceModal.classList.add("hidden");
         attendanceModal.setAttribute("aria-hidden", "true");
     }, 1500);
 }
@@ -126,11 +155,10 @@ function goBack() {
     window.location.replace("../../src/home.php");
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function toErrorMessage(err) {
+    if (window.FaceModelLoader) {
+        return FaceModelLoader.toErrorMessage(err);
+    }
     if (err && typeof err === "object") {
         if (typeof err.message === "string" && err.message.trim() !== "") {
             return err.message;
@@ -145,51 +173,50 @@ function toErrorMessage(err) {
     return "Unknown error";
 }
 
-async function fetchWithRetry(url, attempts = 3) {
-    let lastError = null;
-    for (let i = 1; i <= attempts; i++) {
-        try {
-            const res = await fetch(url, { cache: 'force-cache' });
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            return true;
-        } catch (err) {
-            lastError = err;
-            await sleep(250 * i);
-        }
-    }
-    throw lastError || new Error('Failed to fetch model file');
-}
-
-async function warmModelAssets() {
-    await Promise.all(MODEL_FILES.map(file => fetchWithRetry(`${MODEL_URL}/${file}`, 3)));
-}
-
 /* ---------- LOAD FACE MODELS (ONCE) ---------- */
 async function loadModels(maxAttempts = 3) {
+    if (!window.FaceModelLoader) {
+        statusMsg.style.color = "red";
+        statusMsg.innerText = "Shared model loader is missing. Tap Reset Scanner and try again.";
+        setProgress(100, true);
+        setLoadingState(false);
+        return false;
+    }
+
     let lastError = null;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-            statusMsg.innerText = `Loading face models (${attempt}/${maxAttempts})...`;
-            await warmModelAssets();
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-            ]);
+    setLoadingState(true);
+    const loaded = await FaceModelLoader.loadFaceApiModels({
+        modelUrl: MODEL_URL,
+        modelFiles: MODEL_FILES,
+        loaders: [
+            (url) => faceapi.nets.tinyFaceDetector.loadFromUri(url),
+            (url) => faceapi.nets.faceLandmark68TinyNet.loadFromUri(url),
+            (url) => faceapi.nets.faceRecognitionNet.loadFromUri(url)
+        ],
+        maxAttempts,
+        onAttempt: (attempt, totalAttempts) => {
+            statusMsg.innerText = `Loading face models (${attempt}/${totalAttempts})...`;
+            setProgress(22 + Math.round((attempt / totalAttempts) * 28));
+        },
+        onSuccess: () => {
             console.log("Face models loaded");
             statusMsg.innerText = "Models loaded. Ready to scan QR.";
-            return true;
-        } catch (err) {
+            setProgress(55);
+            setLoadingState(false);
+        },
+        onFailure: (err) => {
             lastError = err ?? new Error("Model load attempt failed");
-            await sleep(500 * attempt);
         }
+    });
+    if (loaded) {
+        return true;
     }
 
     console.error('Model loading failed:', toErrorMessage(lastError), lastError);
     statusMsg.style.color = "red";
     statusMsg.innerText = "Model load failed. Check connection and refresh.";
+    setProgress(100, true);
+    setLoadingState(false);
     return false;
 }
 
@@ -231,6 +258,8 @@ async function startQrScanner() {
     }
     statusMsg.style.color = "";
     statusMsg.innerText = "Loading face verification models...";
+    setLoadingState(true);
+    setProgress(15);
     setQrStatus("Requesting camera access...");
 
     try {
@@ -239,13 +268,16 @@ async function startQrScanner() {
             { fps: 15, qrbox: computeQrBox() },
             async (code) => {
                 await stopQrScannerIfRunning();
-                await sleep(120);
+                await (window.FaceModelLoader
+                    ? FaceModelLoader.sleep(120)
+                    : new Promise(resolve => setTimeout(resolve, 120)));
 
                 readerDiv.style.display = "none";
                 verifyDiv.style.display = "block";
                 if (stepIndicator) {
                     stepIndicator.innerText = "Step 2: Face Verification";
                 }
+                setProgress(70);
                 if (modelsLoadPromise && !faceModelsReady) {
                     statusMsg.style.color = "";
                     statusMsg.innerText = "Finalizing face models...";
@@ -254,6 +286,8 @@ async function startQrScanner() {
                 if (!faceModelsReady) {
                     statusMsg.style.color = "red";
                     statusMsg.innerText = "Face models failed to load. Tap Reset Scanner and try again.";
+                    setProgress(100, true);
+                    setLoadingState(false);
                     return;
                 }
                 handleStudent(code);
@@ -266,9 +300,13 @@ async function startQrScanner() {
         console.error("QR scanner start failed:", message, err);
         if (message.includes("NotAllowedError")) {
             setQrStatus("Camera permission denied/dismissed. Allow camera then tap Reset Scanner.", true);
+            setProgress(100, true);
+            setLoadingState(false);
             return;
         }
         setQrStatus(`Unable to start QR camera (${message}). Tap Reset Scanner and try again.`, true);
+        setProgress(100, true);
+        setLoadingState(false);
     }
 }
 
@@ -302,6 +340,8 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ---------- FETCH STUDENT ---------- */
 async function handleStudent(code) {
     statusMsg.innerText = "Loading student data...";
+    setLoadingState(true);
+    setProgress(78);
 
     const res = await fetch("../../src/api/get_student.php?code=" + encodeURIComponent(code));
     const raw = await res.text();
@@ -312,11 +352,13 @@ async function handleStudent(code) {
         console.error("Invalid JSON from get_student.php:", raw);
         statusMsg.style.color = "red";
         statusMsg.innerText = "Server returned invalid response";
+        setProgress(100, true);
+        setLoadingState(false);
         return;
     }
 
     if (!student.success) {
-        alert("Student not found");
+        alert(student.message || "Student not found");
         location.reload();
         return;
     }
@@ -342,6 +384,8 @@ async function handleStudent(code) {
 /* ---------- FACE VERIFICATION ---------- */
 async function startFaceCheck() {
     statusMsg.innerText = "Align your face to the camera";
+    setProgress(85);
+    setLoadingState(true);
 
     try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -401,6 +445,8 @@ async function startFaceCheck() {
                         if (consecutiveMatches >= 2) {
                             isLocked = true;
                             statusMsg.innerText = "Face matched. Saving...";
+                            setProgress(92);
+                            setLoadingState(true);
                             saveAttendance();
                             return;
                         }
@@ -440,6 +486,8 @@ async function saveAttendance() {
     }
 
     statusMsg.innerText = "Saving attendance...";
+    setProgress(96);
+    setLoadingState(true);
 
     try {
         const response = await fetch("../../src/api/log_attendance.php", {
@@ -460,6 +508,8 @@ async function saveAttendance() {
             console.error("Invalid JSON from log_attendance.php:", raw);
             statusMsg.style.color = "red";
             statusMsg.innerText = "Server returned invalid response";
+            setProgress(100, true);
+            setLoadingState(false);
             setTimeout(() => location.reload(), 2000);
             return;
         }
@@ -467,19 +517,28 @@ async function saveAttendance() {
         if (resData.success) {
             statusMsg.style.color = "green";
             statusMsg.innerText = "Attendance logged";
+            setProgress(100);
+            setLoadingState(false);
             const guardianInformed = typeof resData.message === "string" && resData.message.toLowerCase().includes("email sent");
             showAttendanceModal(student.fullname || "student", guardianInformed);
         } else {
             statusMsg.style.color = "red";
             statusMsg.innerText = "Failed to save attendance";
+            setProgress(100, true);
+            setLoadingState(false);
         }
     } catch (err) {
         console.error(err);
         statusMsg.innerText = "Server error";
+        setProgress(100, true);
+        setLoadingState(false);
     }
 
 setTimeout(() => location.reload(), 2000);
 }
+
+setProgress(10);
+setLoadingState(true);
 </script>
 
 </body>

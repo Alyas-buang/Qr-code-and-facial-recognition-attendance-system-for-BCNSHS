@@ -1,3 +1,3 @@
-<footer style="margin-top: 24px; padding: 14px 10px; text-align: center; font-size: 14px; color: #4b5563;">
-     Developed by Aliviado, D.J 
+<footer class="mt-6 p-3 text-center text-sm text-base-content opacity-70">
+     Developed by Aliviado, D.J
 </footer>
