@@ -98,7 +98,25 @@ timeout /t 1 /nobreak >nul
 goto wait_loop
 
 :open_app
-start "" "%PROJECT_URL%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$url = '%PROJECT_URL%';" ^
+    "$browsers = @(" ^
+    "  \"$env:ProgramFiles\Google\Chrome\Application\chrome.exe\"," ^
+    "  \"${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe\"," ^
+    "  \"$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe\"," ^
+    "  \"${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe\"," ^
+    "  \"$env:ProgramFiles\Mozilla Firefox\firefox.exe\"," ^
+    "  \"${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe\"," ^
+    "  \"$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe\"" ^
+    ");" ^
+    "$browser = $browsers | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1;" ^
+    "if ($browser) { Start-Process -FilePath $browser -ArgumentList $url; exit 0 }" ^
+    "Start-Process $url; exit $LASTEXITCODE"
+if errorlevel 1 (
+    echo [Launcher Warning] Could not open the app automatically.
+    echo Open this URL manually in your browser:
+    echo %PROJECT_URL%
+)
 exit /b 0
 
 :timeout_error
