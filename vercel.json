@@ -7,5 +7,4 @@
       "use": "@vercel/php"
     }
   ]
-}</content>
-<parameter name="filePath">c:\xampp\htdocs\qrcode + facial recognition attendance system\vercel.json
+}
